@@ -22,10 +22,8 @@ class WeightTracker(QWidget):
         # Set the geometry
         self.setGeometry(0, 0, 800, 600)
 
-        # This is the layout we are currently working on
+        # Create the layouts and the widgets contained in it
         self.create_layout()
-
-        # Layout creation done.
 
     def create_layout(self):
         # _______________________________________________
@@ -36,7 +34,7 @@ class WeightTracker(QWidget):
         # |                             |               |
         # |       Calendar              |               |
         # |                             |               |
-        # |                             |               |
+        # |                             | Right-Layout  |
         # |                             |               |
         # |                             |               |
         # |                             |               |
@@ -79,14 +77,13 @@ class WeightTracker(QWidget):
         self.setLayout(self.main_layout)
 
     def get_calendar_widget(self):
-        global currentMonth, currentYear
+        global currentDate, currentMonth, currentYear
 
-        currentMonth = datetime.now().month
-        currentYear = datetime.now().year
+        currentYear, currentMonth, currentDate = map(int, list(str(datetime.now().date()).split('-')))
 
         self.calendar = QCalendarWidget(self);
         self.calendar.setGridVisible(True)
-        self.calendar.setSelectedDate(QDate(currentYear, currentMonth, 1))
+        self.calendar.setSelectedDate(QDate(currentYear, currentMonth, currentDate))
         return self.calendar
 
 
