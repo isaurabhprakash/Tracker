@@ -2,20 +2,25 @@ from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
     QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QStyleFactory, QLineEdit, QCalendarWidget, \
-    QSlider, QGroupBox, QDialog
-
+    QSlider, QGroupBox, QDialog, QDoubleSpinBox
 from PyQt5.QtGui import QPalette, QColor
 
 
 class WeightTracker(QWidget):
 
     def __init__(self, parent=None):
+        # Widgets
         self.calendar = " "
         self.main_layout = " "
         self.left_layout = " "
         self.right_layout = " "
         self.left_upper_layout = " "
         self.left_lower_layout = " "
+        self.slider = " "
+        self.doubleSpinBox = " "
+
+        # Variables
+        self.currentSliderValue = 70
 
         super(WeightTracker, self).__init__(parent)
 
@@ -41,8 +46,8 @@ class WeightTracker(QWidget):
         # |                             |               |
         # |_____________________________|               |
         # |               |             |               |
-        # | Slider        |  LineEdit   |               |
-        # |               |             |               |
+        # | Slider        |  DoubleSpin |               |
+        # |               |     Box     |               |
         # |_______________|_____________|_______________|
 
         # MainLayout : The entire layout
@@ -57,8 +62,8 @@ class WeightTracker(QWidget):
 
         # LeftLowerLayout(Part of LeftLayout) : Layout containing Slider and LineEdit
         self.left_lower_layout = QHBoxLayout()
-        self.left_lower_layout.addWidget(QSlider(Qt.Horizontal))
-        self.left_lower_layout.addWidget(QLabel("Just a label"))
+        self.left_lower_layout.addWidget(self.get_slider())
+        self.left_lower_layout.addWidget(self.get_double_spin_box())
 
         # Adding the LeftUpper and LeftLower Layouts to the LeftLayout
         self.left_layout.addLayout(self.left_upper_layout)
@@ -85,6 +90,29 @@ class WeightTracker(QWidget):
         self.calendar.setGridVisible(True)
         self.calendar.setSelectedDate(QDate(currentYear, currentMonth, currentDate))
         return self.calendar
+
+    def get_slider(self):
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(600)
+        self.slider.setValue(70)
+        self.slider.setTickPosition(2)
+        self.slider.setSingleStep(1)
+        self.slider.setPageStep(5)
+
+        self.slider.valueChanged.connect(lambda x: self.set_current_slider_value(x))
+        return self.slider
+
+    def get_double_spin_box(self):
+        self.doubleSpinBox = QDoubleSpinBox()
+        self.doubleSpinBox.setValue(self.currentSliderValue)
+        self.doubleSpinBox.setMaximum(120.0)
+        return self.doubleSpinBox
+
+    def set_current_slider_value(self, current_value):
+        self.currentSliderValue = 60 + (current_value / 10)
+        self.doubleSpinBox.setValue(self.currentSliderValue)
+        print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
 
 
 def get_dark_palette():
