@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
     QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QStyleFactory, QLineEdit, QCalendarWidget, \
-    QSlider, QGroupBox, QDialog, QDoubleSpinBox
+    QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy
 from PyQt5.QtGui import QPalette, QColor
 
 
@@ -23,11 +23,21 @@ class WeightTracker(QWidget):
         self.right_upper_layout = " "
         self.right_lower_layout = " "
 
+        # Buttons
+        self.add_button = " "
+        self.open_button = " "
+        self.import_button = " "
+        self.export_button = " "
+        self.plot_button = " "
+        self.save_button = " "
+
         # Variables
         self.currentInstanceName = "Saurabh"
         self.lastModifiedDate = "Feb - 2 - 2020"
         self.lastValue = "110"
         self.currentSliderValue = 70
+        self.size_policy_right_upper = " "
+        self.size_policy_right_lower = " "
 
         super(WeightTracker, self).__init__(parent)
 
@@ -79,23 +89,26 @@ class WeightTracker(QWidget):
 
         # RightUpperLayout : Layout containing Instance Information
         self.right_upper_layout = QVBoxLayout()
-        self.right_upper_layout.addWidget(QLabel("Instance : " + self.currentInstanceName + "\nLast modified on : " + self.lastModifiedDate + "\nLast value : " + self.lastValue))
+        self.right_upper_layout.addStretch(1)
+        self.right_upper_layout.setAlignment(Qt.AlignTop)
+        self.right_upper_layout.addWidget(QLabel(
+            "Instance : " + self.currentInstanceName + "\nLast modified on : " + self.lastModifiedDate + "\nLast value : " + self.lastValue))
 
         # RightLowerLayout : Layout containing buttons and settings
         self.right_lower_layout = QVBoxLayout()
-        self.right_lower_layout.addWidget(QPushButton("Add +"))
-        self.right_lower_layout.addWidget(QPushButton("Open"))
-        self.right_lower_layout.addWidget(QPushButton("Import"))
-        self.right_lower_layout.addWidget(QPushButton("Export"))
-        self.right_lower_layout.addWidget(QPushButton("Plot"))
-        self.right_lower_layout.addWidget(QPushButton("Save"))
-
-
-
+        self.right_lower_layout.addStretch(3)
+        self.right_lower_layout.setAlignment(Qt.AlignTop)
+        self.create_buttons()
+        self.right_lower_layout.addWidget(self.add_button)
+        self.right_lower_layout.addWidget(self.open_button)
+        self.right_lower_layout.addWidget(self.import_button)
+        self.right_lower_layout.addWidget(self.export_button)
+        self.right_lower_layout.addWidget(self.plot_button)
+        self.right_lower_layout.addWidget(self.save_button)
 
         # Adding the RightUpper and RightLower layouts to the RightLayout
-        self.right_layout.addLayout(self.right_upper_layout)
-        self.right_layout.addLayout(self.right_lower_layout)
+        self.right_layout.addLayout(self.right_upper_layout, 1)
+        self.right_layout.addLayout(self.right_lower_layout, 5)
 
         # Adding the Left and Right Layouts to the main layout
         self.main_layout.addLayout(self.left_layout)
@@ -105,13 +118,12 @@ class WeightTracker(QWidget):
         self.setLayout(self.main_layout)
 
     def get_calendar_widget(self):
-        global currentDate, currentMonth, currentYear
+        current_year, current_month, current_date = map(int, list(str(datetime.now().date()).split('-')))
 
-        currentYear, currentMonth, currentDate = map(int, list(str(datetime.now().date()).split('-')))
-
-        self.calendar = QCalendarWidget(self);
+        self.calendar = QCalendarWidget(self)
         self.calendar.setGridVisible(True)
-        self.calendar.setSelectedDate(QDate(currentYear, currentMonth, currentDate))
+        self.calendar.setSelectedDate(QDate(current_year, current_month, current_date))
+        self.calendar.clicked.connect(self.show_date)
         return self.calendar
 
     def get_slider(self):
@@ -136,6 +148,32 @@ class WeightTracker(QWidget):
         self.currentSliderValue = 60 + (current_value / 10)
         self.doubleSpinBox.setValue(self.currentSliderValue)
         print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
+
+    def create_buttons(self):
+        self.add_button = QPushButton("Add +")
+        self.add_button.setFixedSize(300, 60)
+
+        self.open_button = QPushButton("Open")
+        self.open_button.setFixedSize(300, 60)
+
+        self.import_button = QPushButton("Import")
+        self.import_button.setFixedSize(300, 60)
+
+        self.export_button = QPushButton("Export")
+        self.export_button.setFixedSize(300, 60)
+
+        self.plot_button = QPushButton("Plot")
+        self.plot_button.setFixedSize(300, 60)
+
+        self.save_button = QPushButton("Save")
+        self.save_button.setFixedSize(300, 60)
+        self.save_button.clicked.connect(self.save_file)
+
+    def save_file(self):
+        print("Save button pressed")
+
+    def show_date(self):
+        print(int(self.calendar.selectedDate().toString("dd.MM.yyyy").replace('.','')))
 
 
 def get_dark_palette():
@@ -164,7 +202,7 @@ if __name__ == '__main__':
 
     windows = WeightTracker()
 
-    # This code will be removed once the app is completely developed.
+    # #This code will be removed once the app is completely developed.
     # windows.setStyleSheet("""
     #     QWidget {
     #         border: 2px solid red;
