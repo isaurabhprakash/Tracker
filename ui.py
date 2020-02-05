@@ -11,15 +11,22 @@ class WeightTracker(QWidget):
     def __init__(self, parent=None):
         # Widgets
         self.calendar = " "
+        self.slider = " "
+        self.doubleSpinBox = " "
+
+        # Layouts
         self.main_layout = " "
         self.left_layout = " "
         self.right_layout = " "
         self.left_upper_layout = " "
         self.left_lower_layout = " "
-        self.slider = " "
-        self.doubleSpinBox = " "
+        self.right_upper_layout = " "
+        self.right_lower_layout = " "
 
         # Variables
+        self.currentInstanceName = "Saurabh"
+        self.lastModifiedDate = "Feb - 2 - 2020"
+        self.lastValue = "110"
         self.currentSliderValue = 70
 
         super(WeightTracker, self).__init__(parent)
@@ -31,24 +38,22 @@ class WeightTracker(QWidget):
         self.create_layout()
 
     def create_layout(self):
-        # _______________________________________________
-        # |                             |               |
-        # |                             |               |
-        # |                             |               |
-        # |                             |               |
-        # |                             |               |
-        # |       Calendar              |               |
-        # |                             |               |
-        # |                             | Right-Layout  |
-        # |                             |               |
-        # |                             |               |
-        # |                             |               |
-        # |                             |               |
-        # |_____________________________|               |
-        # |               |             |               |
-        # | Slider        |  DoubleSpin |               |
-        # |               |     Box     |               |
-        # |_______________|_____________|_______________|
+        # _______________________________________________________________
+        # |                             |                               |
+        # |                             | Instance : Saurabh            |
+        # |                             | Last Modified on: Feb-2-2020  |
+        # |                             | Last Value : 110              |
+        # |                             |                               |
+        # |                             |_______________________________|
+        # |       Calendar              |                               |
+        # |                             |   Add +                       |
+        # |                             |   Import                      |
+        # |                             |   Export                      |
+        # |                             |   Plot                        |
+        # |_____________________________|   Save                        |
+        # | Slider      |  DoubleSpin   |                               |
+        # |             |     Box       |   Settings       Icon         |
+        # |_____________|_______________|_______________________________|
 
         # MainLayout : The entire layout
         self.main_layout = QHBoxLayout()
@@ -69,10 +74,28 @@ class WeightTracker(QWidget):
         self.left_layout.addLayout(self.left_upper_layout)
         self.left_layout.addLayout(self.left_lower_layout)
 
-        # RightLayout : Containing 2 Labels for now
+        # RightLayout : Layout containing Instance information adn different buttons.
         self.right_layout = QVBoxLayout()
-        self.right_layout.addWidget(QLabel("Upper Text"))
-        self.right_layout.addWidget(QLabel("Lower Text"))
+
+        # RightUpperLayout : Layout containing Instance Information
+        self.right_upper_layout = QVBoxLayout()
+        self.right_upper_layout.addWidget(QLabel("Instance : " + self.currentInstanceName + "\nLast modified on : " + self.lastModifiedDate + "\nLast value : " + self.lastValue))
+
+        # RightLowerLayout : Layout containing buttons and settings
+        self.right_lower_layout = QVBoxLayout()
+        self.right_lower_layout.addWidget(QPushButton("Add +"))
+        self.right_lower_layout.addWidget(QPushButton("Open"))
+        self.right_lower_layout.addWidget(QPushButton("Import"))
+        self.right_lower_layout.addWidget(QPushButton("Export"))
+        self.right_lower_layout.addWidget(QPushButton("Plot"))
+        self.right_lower_layout.addWidget(QPushButton("Save"))
+
+
+
+
+        # Adding the RightUpper and RightLower layouts to the RightLayout
+        self.right_layout.addLayout(self.right_upper_layout)
+        self.right_layout.addLayout(self.right_lower_layout)
 
         # Adding the Left and Right Layouts to the main layout
         self.main_layout.addLayout(self.left_layout)
