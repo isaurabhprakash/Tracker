@@ -1,3 +1,5 @@
+import struct
+
 from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
@@ -27,15 +29,18 @@ class WeightTracker(QWidget):
         self.add_button = " "
         self.open_button = " "
         self.import_button = " "
-        self.export_button = " "
+        self.showlog_button = " "
         self.plot_button = " "
         self.save_button = " "
 
         # Variables
         self.currentInstanceName = "Saurabh"
+        self.currentInstance = open("saurabh.trkr", "wb+")
         self.lastModifiedDate = "Feb - 2 - 2020"
         self.lastValue = "110"
         self.currentSliderValue = 70
+        self.currentDate = " "
+        print(self.currentDate)
         self.size_policy_right_upper = " "
         self.size_policy_right_lower = " "
 
@@ -58,7 +63,7 @@ class WeightTracker(QWidget):
         # |       Calendar              |                               |
         # |                             |   Add +                       |
         # |                             |   Import                      |
-        # |                             |   Export                      |
+        # |                             |   Show Log                    |
         # |                             |   Plot                        |
         # |_____________________________|   Save                        |
         # | Slider      |  DoubleSpin   |                               |
@@ -102,7 +107,7 @@ class WeightTracker(QWidget):
         self.right_lower_layout.addWidget(self.add_button)
         self.right_lower_layout.addWidget(self.open_button)
         self.right_lower_layout.addWidget(self.import_button)
-        self.right_lower_layout.addWidget(self.export_button)
+        self.right_lower_layout.addWidget(self.showlog_button)
         self.right_lower_layout.addWidget(self.plot_button)
         self.right_lower_layout.addWidget(self.save_button)
 
@@ -123,7 +128,8 @@ class WeightTracker(QWidget):
         self.calendar = QCalendarWidget(self)
         self.calendar.setGridVisible(True)
         self.calendar.setSelectedDate(QDate(current_year, current_month, current_date))
-        self.calendar.clicked.connect(self.show_date)
+        self.calendar.clicked.connect(self.set_current_date)
+        self.set_current_date()
         return self.calendar
 
     def get_slider(self):
@@ -144,11 +150,6 @@ class WeightTracker(QWidget):
         self.doubleSpinBox.setMaximum(120.0)
         return self.doubleSpinBox
 
-    def set_current_slider_value(self, current_value):
-        self.currentSliderValue = 60 + (current_value / 10)
-        self.doubleSpinBox.setValue(self.currentSliderValue)
-        print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
-
     def create_buttons(self):
         self.add_button = QPushButton("Add +")
         self.add_button.setFixedSize(300, 60)
@@ -159,8 +160,8 @@ class WeightTracker(QWidget):
         self.import_button = QPushButton("Import")
         self.import_button.setFixedSize(300, 60)
 
-        self.export_button = QPushButton("Export")
-        self.export_button.setFixedSize(300, 60)
+        self.showlog_button = QPushButton("Show Log")
+        self.showlog_button.setFixedSize(300, 60)
 
         self.plot_button = QPushButton("Plot")
         self.plot_button.setFixedSize(300, 60)
@@ -169,12 +170,21 @@ class WeightTracker(QWidget):
         self.save_button.setFixedSize(300, 60)
         self.save_button.clicked.connect(self.save_file)
 
+    def set_current_date(self):
+        self.currentDate = int(self.calendar.selectedDate().toString("yyyy.MM.dd").replace('.', ''))
+        print(self.currentDate)
+
+    def set_current_slider_value(self, current_value):
+        self.currentSliderValue = int(60 + (current_value / 10))
+        self.doubleSpinBox.setValue(self.currentSliderValue)
+        print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
+
     def save_file(self):
-        print("Save button pressed")
-
-    def show_date(self):
-        print(int(self.calendar.selectedDate().toString("dd.MM.yyyy").replace('.','')))
-
+        print(type(self.currentDate))
+        print(type(self.currentSliderValue))
+        self.currentInstance.write(struct.pack('i', self.currentDate))
+        self.currentInstance.write(struct.pack('i', self.currentSliderValue))
+        self.currentInstance.flush()
 
 def get_dark_palette():
     dark_palette = QPalette()
