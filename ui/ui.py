@@ -182,6 +182,7 @@ class WeightTracker(QWidget):
     def save_file(self):
         print(type(self.currentDate))
         print(type(self.currentSliderValue))
+        print(struct.pack('i', self.currentDate))
         self.currentInstance.write(struct.pack('i', self.currentDate))
         self.currentInstance.write(struct.pack('i', self.currentSliderValue))
         self.currentInstance.flush()
