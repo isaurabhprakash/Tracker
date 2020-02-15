@@ -3,7 +3,7 @@ from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
     QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QStyleFactory, QLineEdit, QCalendarWidget, \
     QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QIcon
 
 from database.datafile import *
 
@@ -11,8 +11,11 @@ from database.datafile import *
 class WeightTracker(QWidget):
 
     def __init__(self, parent=None):
+        super(WeightTracker, self).__init__(parent)
+
         # Read the last instance from trkr file
         pLastInstance = "saurabh.trkr"
+        self.currentInstanceName = "Saurabh"
 
         self.currentInstance = DataFile(pLastInstance)
 
@@ -39,8 +42,6 @@ class WeightTracker(QWidget):
         self.save_button = " "
 
         # Variables
-        self.currentInstanceName = "Saurabh"
-
         self.lastModifiedDate = "Feb - 2 - 2020"
         self.lastValue = "110"
         self.currentSliderValue = 70
@@ -49,9 +50,10 @@ class WeightTracker(QWidget):
         self.size_policy_right_upper = " "
         self.size_policy_right_lower = " "
 
-        super(WeightTracker, self).__init__(parent)
 
         # Set the geometry
+        self.setWindowTitle('Tracker')
+        self.setWindowIcon(QIcon('logo.png'))
         self.setGeometry(0, 0, 800, 600)
 
         # Create the layouts and the widgets contained in it
