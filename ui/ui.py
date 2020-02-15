@@ -1,5 +1,3 @@
-import struct
-
 from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
@@ -7,10 +5,17 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
     QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy
 from PyQt5.QtGui import QPalette, QColor
 
+from database.datafile import *
+
 
 class WeightTracker(QWidget):
 
     def __init__(self, parent=None):
+        # Read the last instance from trkr file
+        pLastInstance = "saurabh.trkr"
+
+        self.currentInstance = DataFile(pLastInstance)
+
         # Widgets
         self.calendar = " "
         self.slider = " "
@@ -35,7 +40,7 @@ class WeightTracker(QWidget):
 
         # Variables
         self.currentInstanceName = "Saurabh"
-        self.currentInstance = open("saurabh.trkr", "wb+")
+
         self.lastModifiedDate = "Feb - 2 - 2020"
         self.lastValue = "110"
         self.currentSliderValue = 70
@@ -97,7 +102,9 @@ class WeightTracker(QWidget):
         self.right_upper_layout.addStretch(1)
         self.right_upper_layout.setAlignment(Qt.AlignTop)
         self.right_upper_layout.addWidget(QLabel(
-            "Instance : " + self.currentInstanceName + "\nLast modified on : " + self.lastModifiedDate + "\nLast value : " + self.lastValue))
+            "Instance : " + self.currentInstanceName + "\nLast modified on : " + self.lastModifiedDate + "\nLast "
+                                                                                                         "value : " +
+            self.lastValue))
 
         # RightLowerLayout : Layout containing buttons and settings
         self.right_lower_layout = QVBoxLayout()
@@ -180,12 +187,10 @@ class WeightTracker(QWidget):
         print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
 
     def save_file(self):
-        print(type(self.currentDate))
-        print(type(self.currentSliderValue))
-        print(struct.pack('i', self.currentDate))
-        self.currentInstance.write(struct.pack('i', self.currentDate))
-        self.currentInstance.write(struct.pack('i', self.currentSliderValue))
-        self.currentInstance.flush()
+        print(self.currentDate)
+        print(self.currentSliderValue)
+        self.currentInstance.write_field(self.currentDate, self.currentSliderValue)
+
 
 def get_dark_palette():
     dark_palette = QPalette()
@@ -203,24 +208,4 @@ def get_dark_palette():
     dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
     dark_palette.setColor(QPalette.HighlightedText, Qt.black)
 
-    return dark_palette;
-
-
-if __name__ == '__main__':
-    app = QApplication([])
-    app.setStyle('Fusion')
-    app.setPalette(get_dark_palette())
-
-    windows = WeightTracker()
-
-    # #This code will be removed once the app is completely developed.
-    # windows.setStyleSheet("""
-    #     QWidget {
-    #         border: 2px solid red;
-    #         border-radius: 2px;
-    #         }
-    #     """)
-
-    windows.show()
-
-    app.exec_()
+    return dark_palette
