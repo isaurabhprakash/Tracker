@@ -13,7 +13,7 @@ class AddInstanceWindow(QMainWindow):
         QWidget.__init__(self)
 
         #
-        self.setWindowTitle("Add a new Instance")
+        self.setWindowTitle("Create a new Instance")
         self.setWindowIcon(QIcon('logo.png'))
         self.setGeometry(300, 300, 600, 100)
 
@@ -31,14 +31,15 @@ class AddInstanceWindow(QMainWindow):
         # |----------------------------------------|
 
         # Create the buttons that will be used in the window
+        self.create_lineedit()
         self.create_buttons()
 
         self.main_layout = QVBoxLayout(self.cw)
 
         # Create the upper layout - Containing Name
         self.upper_layout = QHBoxLayout(self.cw)
-        self.upper_layout.addWidget(QLabel("Name\t", self.cw))
-        self.upper_layout.addWidget(QLineEdit(self.cw))
+        self.upper_layout.addWidget(QLabel('Name\t'))
+        self.upper_layout.addWidget(self.instanceLine)
 
         # Create the layout containing Create and Cancel buttons
         self.lower_layout = QHBoxLayout(self.cw)
@@ -59,12 +60,18 @@ class AddInstanceWindow(QMainWindow):
         self.setStyleSheet("QPushButton { background-color: maroon }")
         self.setLayout(self.main_layout)
 
+    def create_lineedit(self):
+        self.instanceLine = QLineEdit(self.cw)
+        self.instanceLine.returnPressed.connect(self.create_instance)
+
     def create_buttons(self):
         self.create_button = QPushButton("Create", self.cw)
         self.create_button.clicked.connect(self.create_instance)
+        self.create_button.setAutoDefault(True)
 
         self.cancel_button = QPushButton("Cancel", self.cw)
         self.cancel_button.clicked.connect(self.cancel_instance)
+        self.cancel_button.setAutoDefault(True)
 
     def create_instance(self):
         print("Instance created")
