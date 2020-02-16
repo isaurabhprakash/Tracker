@@ -2,29 +2,35 @@ from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
     QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QStyleFactory, QLineEdit, QCalendarWidget, \
-    QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy
-from PyQt5.QtGui import QPalette, QColor, QIcon
+    QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy, QMainWindow
+from PyQt5.QtGui import QPalette, QColor, QIcon, QFont
 
 from database.datafile import *
 
+class MainWindow(QMainWindow):
+    def __init__(self, *args):
+        QMainWindow.__init__(self, *args)
 
-class WeightTracker(QWidget):
+        # Set the central widget. Everything will be on top of this.
+        self.cw = QWidget(self)
+        self.setCentralWidget(self.cw)
 
-    def __init__(self, parent=None):
-        super(WeightTracker, self).__init__(parent)
+        # Set the window properties
+        self.setWindowTitle('Tracker')
+        self.setWindowIcon(QIcon('logo.png'))
+        self.setGeometry(0, 0, 800, 600)
 
         # Read the last instance from trkr file
         pLastInstance = "saurabh.trkr"
         self.currentInstanceName = "Saurabh"
-
         self.currentInstance = DataFile(pLastInstance)
 
-        # Widgets
+        # Child widgets on top of Central Widget
         self.calendar = " "
         self.slider = " "
         self.doubleSpinBox = " "
 
-        # Layouts
+        # Layouts for the central widget
         self.main_layout = " "
         self.left_layout = " "
         self.right_layout = " "
@@ -33,7 +39,7 @@ class WeightTracker(QWidget):
         self.right_upper_layout = " "
         self.right_lower_layout = " "
 
-        # Buttons
+        # Buttons on the central widget
         self.add_button = " "
         self.open_button = " "
         self.import_button = " "
@@ -41,7 +47,7 @@ class WeightTracker(QWidget):
         self.plot_button = " "
         self.save_button = " "
 
-        # Variables
+        # Variables used in the program
         self.lastModifiedDate = "Feb - 2 - 2020"
         self.lastValue = "110"
         self.currentSliderValue = 70
@@ -49,12 +55,6 @@ class WeightTracker(QWidget):
         print(self.currentDate)
         self.size_policy_right_upper = " "
         self.size_policy_right_lower = " "
-
-
-        # Set the geometry
-        self.setWindowTitle('Tracker')
-        self.setWindowIcon(QIcon('logo.png'))
-        self.setGeometry(0, 0, 800, 600)
 
         # Create the layouts and the widgets contained in it
         self.create_layout()
@@ -78,17 +78,17 @@ class WeightTracker(QWidget):
         # |_____________|_______________|_______________________________|
 
         # MainLayout : The entire layout
-        self.main_layout = QHBoxLayout()
+        self.main_layout = QHBoxLayout(self.cw)
 
         # LeftLayout : Layout containing Calendar, Slider and LineEdit
-        self.left_layout = QVBoxLayout()
+        self.left_layout = QVBoxLayout(self.cw)
 
         # LeftUpperLayout(Part of LeftLayout): Layout containing Calendar
-        self.left_upper_layout = QGridLayout()
+        self.left_upper_layout = QGridLayout(self.cw)
         self.left_upper_layout.addWidget(self.get_calendar_widget())
 
         # LeftLowerLayout(Part of LeftLayout) : Layout containing Slider and LineEdit
-        self.left_lower_layout = QHBoxLayout()
+        self.left_lower_layout = QHBoxLayout(self.cw)
         self.left_lower_layout.addWidget(self.get_slider())
         self.left_lower_layout.addWidget(self.get_double_spin_box())
 
@@ -97,10 +97,10 @@ class WeightTracker(QWidget):
         self.left_layout.addLayout(self.left_lower_layout)
 
         # RightLayout : Layout containing Instance information adn different buttons.
-        self.right_layout = QVBoxLayout()
+        self.right_layout = QVBoxLayout(self.cw)
 
         # RightUpperLayout : Layout containing Instance Information
-        self.right_upper_layout = QVBoxLayout()
+        self.right_upper_layout = QVBoxLayout(self.cw)
         self.right_upper_layout.addStretch(1)
         self.right_upper_layout.setAlignment(Qt.AlignTop)
         self.right_upper_layout.addWidget(QLabel(
@@ -108,8 +108,17 @@ class WeightTracker(QWidget):
                                                                                                          "value : " +
             self.lastValue))
 
+        selectedDate = QLabel("\n\nSelcted Date : 2 Feb 2020")
+        selectedDate.setFont(QFont("Times", 12, QFont.Black))
+
+        valueOnSelectedDate = QLabel("Value on the date: 110")
+        valueOnSelectedDate.setFont(QFont("Times", 12, QFont.Black))
+
+        self.right_upper_layout.addWidget(selectedDate)
+        self.right_upper_layout.addWidget(valueOnSelectedDate)
+
         # RightLowerLayout : Layout containing buttons and settings
-        self.right_lower_layout = QVBoxLayout()
+        self.right_lower_layout = QVBoxLayout(self.cw)
         self.right_lower_layout.addStretch(3)
         self.right_lower_layout.setAlignment(Qt.AlignTop)
         self.create_buttons()
@@ -129,12 +138,12 @@ class WeightTracker(QWidget):
         self.main_layout.addLayout(self.right_layout)
 
         # MainLayout is what we are using
-        self.setLayout(self.main_layout)
+        self.cw.setLayout(self.main_layout)
 
     def get_calendar_widget(self):
         current_year, current_month, current_date = map(int, list(str(datetime.now().date()).split('-')))
 
-        self.calendar = QCalendarWidget(self)
+        self.calendar = QCalendarWidget(self.cw)
         self.calendar.setGridVisible(True)
         self.calendar.setSelectedDate(QDate(current_year, current_month, current_date))
         self.calendar.clicked.connect(self.set_current_date)
@@ -142,7 +151,7 @@ class WeightTracker(QWidget):
         return self.calendar
 
     def get_slider(self):
-        self.slider = QSlider(Qt.Horizontal)
+        self.slider = QSlider(Qt.Horizontal, self.cw)
         self.slider.setMinimum(0)
         self.slider.setMaximum(600)
         self.slider.setValue(70)
@@ -154,28 +163,29 @@ class WeightTracker(QWidget):
         return self.slider
 
     def get_double_spin_box(self):
-        self.doubleSpinBox = QDoubleSpinBox()
+        self.doubleSpinBox = QDoubleSpinBox(self.cw)
         self.doubleSpinBox.setValue(self.currentSliderValue)
         self.doubleSpinBox.setMaximum(120.0)
         return self.doubleSpinBox
 
     def create_buttons(self):
-        self.add_button = QPushButton("Add +")
+        self.add_button = QPushButton("Add +", self.cw)
         self.add_button.setFixedSize(300, 60)
+        self.add_button.clicked.connect(self.add_instance)
 
-        self.open_button = QPushButton("Open")
+        self.open_button = QPushButton("Open", self.cw)
         self.open_button.setFixedSize(300, 60)
 
-        self.import_button = QPushButton("Import")
+        self.import_button = QPushButton("Import", self.cw)
         self.import_button.setFixedSize(300, 60)
 
-        self.showlog_button = QPushButton("Show Log")
+        self.showlog_button = QPushButton("Show Log", self.cw)
         self.showlog_button.setFixedSize(300, 60)
 
-        self.plot_button = QPushButton("Plot")
+        self.plot_button = QPushButton("Plot", self.cw)
         self.plot_button.setFixedSize(300, 60)
 
-        self.save_button = QPushButton("Save")
+        self.save_button = QPushButton("Save", self.cw)
         self.save_button.setFixedSize(300, 60)
         self.save_button.clicked.connect(self.save_file)
 
@@ -187,6 +197,9 @@ class WeightTracker(QWidget):
         self.currentSliderValue = int(60 + (current_value / 10))
         self.doubleSpinBox.setValue(self.currentSliderValue)
         print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
+
+    def add_instance(self):
+        print("Add Button Clicked")
 
     def save_file(self):
         print(self.currentDate)

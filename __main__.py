@@ -6,7 +6,7 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     app.setPalette(get_dark_palette())
 
-    windows = WeightTracker()
+    windows = MainWindow()
     windows.show()
 
     app.exec_()
