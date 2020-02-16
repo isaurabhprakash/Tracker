@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt, QDate, pyqtSignal
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
-    QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QStyleFactory, QLineEdit, QCalendarWidget, \
-    QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy, QMainWindow, QShortcut
+    QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLineEdit, QCalendarWidget, \
+    QSlider, QDoubleSpinBox, QMainWindow, QShortcut
 from PyQt5.QtGui import QPalette, QColor, QIcon, QFont, QKeySequence
 
 from database.datafile import *
@@ -94,6 +94,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Tracker')
         self.setWindowIcon(QIcon('logo.png'))
         self.setGeometry(0, 0, 800, 600)
+        self.setStyleSheet("QPushButton { font-size: 10pt;font-weight: bold}")
 
         # Read the last instance from trkr file
         pLastInstance = "saurabh.trkr"
