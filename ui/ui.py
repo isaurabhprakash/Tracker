@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt, QDate, pyqtSignal
 from datetime import datetime
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
+from PyQt5.QtWidgets import QLabel, QWidget, \
     QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLineEdit, QCalendarWidget, \
-    QSlider, QDoubleSpinBox, QMainWindow, QShortcut
+    QSlider, QDoubleSpinBox, QMainWindow, QShortcut, QFileDialog, QScrollArea, QGroupBox, QFormLayout, QListWidget
 from PyQt5.QtGui import QPalette, QColor, QIcon, QFont, QKeySequence
 
 from database.datafile import *
@@ -48,7 +48,6 @@ class AddInstanceWindow(QMainWindow):
 
         self.right_lower_layout = QHBoxLayout(self.cw)
         self.right_lower_layout.addWidget(self.create_button)
-        self.right_lower_layout.addWidget(self.cancel_button)
 
         self.lower_layout.addLayout(self.empty_lower_layout)
         self.lower_layout.addLayout(self.right_lower_layout)
@@ -59,6 +58,9 @@ class AddInstanceWindow(QMainWindow):
         self.setStyleSheet("QPushButton { background-color: maroon }")
         self.setLayout(self.main_layout)
 
+        self.escape = QShortcut(QKeySequence(Qt.Key_Escape), self.cw)
+        self.escape.activated.connect(self.close_window)
+
     def create_lineedit(self):
         self.instanceLine = QLineEdit(self.cw)
         self.instanceLine.returnPressed.connect(self.create_instance)
@@ -66,19 +68,102 @@ class AddInstanceWindow(QMainWindow):
     def create_buttons(self):
         self.create_button = QPushButton("Create", self.cw)
         self.create_button.clicked.connect(self.create_instance)
-        self.create_button.setAutoDefault(True)
         self.create_button.setShortcut(QKeySequence(Qt.Key_Return))
-
-        self.cancel_button = QPushButton("Cancel", self.cw)
-        self.cancel_button.clicked.connect(self.cancel_instance)
-        self.cancel_button.setAutoDefault(True)
-        self.cancel_button.setShortcut(QKeySequence(Qt.Key_Escape))
 
     def create_instance(self):
         print("Instance created")
 
-    def cancel_instance(self):
+    def close_window(self):
         print("Cancel button pressed")
+        self.close()
+
+
+class InstanceSelectionWindow(QMainWindow):
+    def __init__(self, mainWindow):
+        QWidget.__init__(self)
+
+        # Set the window properties
+        self.setWindowTitle("Open Tracker Log")
+        self.setWindowIcon(QIcon('logo.png'))
+        self.setGeometry(300, 300, 600, 100)
+
+        # Create the central widget
+        self.cw = QWidget()
+        self.setCentralWidget(self.cw)
+
+        # Create the buttons in the layout
+        self.create_buttons()
+
+        # Now create the actual window
+        self.create_layout()
+
+        self.escape = QShortcut(QKeySequence(Qt.Key_Escape), self.cw)
+        self.escape.activated.connect(self.close_window)
+
+    # |----------------------------------------------------------------|
+    # |                                                                |
+    # |   Location :   [........................]  [ChangeLocation]    |
+    # |                                                                |
+    # |                 [------------------------]                     |
+    # |                 [------------------------]                     |
+    # |                 [------------------------]                     |
+    # |                 [   Scrollable Area      ]                     |
+    # |                 [------------------------]                     |
+    # |                 [------------------------]                     |
+    # |                 [------------------------]                     |
+    # |                                             [Open]             |
+    # |----------------------------------------------------------------|
+    def create_layout(self):
+        # The main layout that contains all the other layouts
+        self.main_layout = QVBoxLayout(self.cw)
+
+        # Create the upper layout containing Location and Location Selector icon
+        self.upper_layout = QHBoxLayout()
+        self.upper_layout.addWidget(QLabel('Location'))
+        self.upper_layout.addWidget(QLineEdit('saurabh.trkr'))
+
+        self.openIconButton = QPushButton()
+        self.openIconButton.setIcon(QIcon('open.png'))
+
+        self.upper_layout.addWidget(self.openIconButton)
+
+        # Create the list widget containing the list of instances
+        self.listWidget = QListWidget()
+        self.listWidget.setFocus(Qt.OtherFocusReason)
+        #self.listWidget.setFixedHeight(200)
+        self.listWidget.addItem("Saurabh")
+        self.listWidget.addItem("Prakash")
+        self.listWidget.addItem("Item3")
+        self.listWidget.addItem("Item4")
+        self.listWidget.addItem("Item5")
+        self.listWidget.addItem("Item6")
+        self.listWidget.addItem("Item7")
+        self.listWidget.addItem("Item8")
+        self.listWidget.addItem("Item9")
+        self.listWidget.addItem("Item10")
+        self.listWidget.addItem("Item11")
+
+        # Create the bottom layout containing the Open Log button
+        self.bottom_layout = QHBoxLayout(self.cw)
+        self.bottom_layout.addLayout(QHBoxLayout())
+        self.bottom_layout.addWidget(self.openLog_button)
+
+        # Add all the children layout to the main layout
+        self.main_layout.addLayout(self.upper_layout)
+        self.main_layout.addWidget(self.listWidget)
+        self.listWidget.setFocus(Qt.OtherFocusReason)
+        self.main_layout.addLayout(self.bottom_layout)
+
+        self.cw.setLayout(self.main_layout)
+
+    def create_buttons(self):
+        self.openLog_button = QPushButton('Open Log')
+        self.openLog_button.setStyleSheet("background-color : maroon")
+        self.openLog_button.setShortcut(QKeySequence(Qt.Key_Return))
+
+
+    def close_window(self):
+        print('Escape Pressed')
         self.close()
 
 
@@ -291,6 +376,8 @@ class MainWindow(QMainWindow):
 
     def open_instance(self):
         print("Opening instance")
+        self.instanceSelectionWindow = InstanceSelectionWindow(self)
+        self.instanceSelectionWindow.show()
 
     def import_data(self):
         print("Importing data")
