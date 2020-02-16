@@ -1,9 +1,9 @@
-from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtCore import Qt, QDate, pyqtSignal
 from datetime import datetime
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, \
     QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QStyleFactory, QLineEdit, QCalendarWidget, \
-    QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy, QMainWindow
-from PyQt5.QtGui import QPalette, QColor, QIcon, QFont
+    QSlider, QGroupBox, QDialog, QDoubleSpinBox, QSizePolicy, QMainWindow, QShortcut
+from PyQt5.QtGui import QPalette, QColor, QIcon, QFont, QKeySequence
 
 from database.datafile import *
 
@@ -12,14 +12,13 @@ class AddInstanceWindow(QMainWindow):
     def __init__(self, mainWindow):
         QWidget.__init__(self)
 
-        #
+        # Set the window properties
         self.setWindowTitle("Create a new Instance")
         self.setWindowIcon(QIcon('logo.png'))
         self.setGeometry(300, 300, 600, 100)
 
         # Create the central widget
         self.cw = QWidget()
-
         self.setCentralWidget(self.cw)
 
         # Now create the central widget
@@ -68,16 +67,19 @@ class AddInstanceWindow(QMainWindow):
         self.create_button = QPushButton("Create", self.cw)
         self.create_button.clicked.connect(self.create_instance)
         self.create_button.setAutoDefault(True)
+        self.create_button.setShortcut(QKeySequence(Qt.Key_Return))
 
         self.cancel_button = QPushButton("Cancel", self.cw)
         self.cancel_button.clicked.connect(self.cancel_instance)
         self.cancel_button.setAutoDefault(True)
+        self.cancel_button.setShortcut(QKeySequence(Qt.Key_Escape))
 
     def create_instance(self):
         print("Instance created")
 
     def cancel_instance(self):
         print("Cancel button pressed")
+        self.close()
 
 
 class MainWindow(QMainWindow):
@@ -245,22 +247,32 @@ class MainWindow(QMainWindow):
         self.add_button = QPushButton("Add +", self.cw)
         self.add_button.setFixedSize(300, 60)
         self.add_button.clicked.connect(self.add_instance)
+        self.add_button.setShortcut(QKeySequence(Qt.Key_A))
 
         self.open_button = QPushButton("Open", self.cw)
         self.open_button.setFixedSize(300, 60)
+        self.open_button.clicked.connect(self.open_instance)
+        self.open_button.setShortcut(QKeySequence(Qt.Key_O))
 
         self.import_button = QPushButton("Import", self.cw)
         self.import_button.setFixedSize(300, 60)
+        self.import_button.clicked.connect(self.import_data)
+        self.import_button.setShortcut(QKeySequence(Qt.Key_I))
 
         self.showlog_button = QPushButton("Show Log", self.cw)
         self.showlog_button.setFixedSize(300, 60)
+        self.showlog_button.clicked.connect(self.show_log)
+        self.showlog_button.setShortcut(QKeySequence(Qt.Key_L))
 
         self.plot_button = QPushButton("Plot", self.cw)
         self.plot_button.setFixedSize(300, 60)
+        self.plot_button.clicked.connect(self.plot_graph)
+        self.plot_button.setShortcut(QKeySequence(Qt.Key_P))
 
         self.save_button = QPushButton("Save", self.cw)
         self.save_button.setFixedSize(300, 60)
         self.save_button.clicked.connect(self.save_file)
+        self.save_button.setShortcut(QKeySequence(Qt.Key_S))
 
     def set_current_date(self):
         self.currentDate = int(self.calendar.selectedDate().toString("yyyy.MM.dd").replace('.', ''))
@@ -275,6 +287,18 @@ class MainWindow(QMainWindow):
         print("Add Button Clicked")
         self.addWindow = AddInstanceWindow(self)
         self.addWindow.show()
+
+    def open_instance(self):
+        print("Opening instance")
+
+    def import_data(self):
+        print("Importing data")
+
+    def show_log(self):
+        print("Showing Log")
+
+    def plot_graph(self):
+        print("Plotting Graph")
 
     def save_file(self):
         print(self.currentDate)
