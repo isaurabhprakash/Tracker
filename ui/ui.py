@@ -7,6 +7,72 @@ from PyQt5.QtGui import QPalette, QColor, QIcon, QFont
 
 from database.datafile import *
 
+
+class AddInstanceWindow(QMainWindow):
+    def __init__(self, mainWindow):
+        QWidget.__init__(self)
+
+        #
+        self.setWindowTitle("Add a new Instance")
+        self.setWindowIcon(QIcon('logo.png'))
+        self.setGeometry(300, 300, 600, 100)
+
+        # Create the central widget
+        self.cw = QWidget()
+
+        self.setCentralWidget(self.cw)
+
+        # Now create the central widget
+        # |----------------------------------------|
+        # |                                        |
+        # |   Name :   [....................]      |
+        # |                                        |
+        # |                 [CREATE]   [Cancel]    |
+        # |----------------------------------------|
+
+        # Create the buttons that will be used in the window
+        self.create_buttons()
+
+        self.main_layout = QVBoxLayout(self.cw)
+
+        # Create the upper layout - Containing Name
+        self.upper_layout = QHBoxLayout(self.cw)
+        self.upper_layout.addWidget(QLabel("Name\t", self.cw))
+        self.upper_layout.addWidget(QLineEdit(self.cw))
+
+        # Create the layout containing Create and Cancel buttons
+        self.lower_layout = QHBoxLayout(self.cw)
+
+        self.empty_lower_layout = QHBoxLayout()
+        self.empty_lower_layout.addStretch(3)
+
+        self.right_lower_layout = QHBoxLayout(self.cw)
+        self.right_lower_layout.addWidget(self.create_button)
+        self.right_lower_layout.addWidget(self.cancel_button)
+
+        self.lower_layout.addLayout(self.empty_lower_layout)
+        self.lower_layout.addLayout(self.right_lower_layout)
+
+        # Add the children layouts to the main layout
+        self.main_layout.addLayout(self.upper_layout)
+        self.main_layout.addLayout(self.lower_layout)
+        self.setStyleSheet("QPushButton { background-color: maroon }")
+        self.setLayout(self.main_layout)
+
+    def create_buttons(self):
+        self.create_button = QPushButton("Create", self.cw)
+        self.create_button.clicked.connect(self.create_instance)
+
+        self.cancel_button = QPushButton("Cancel", self.cw)
+        self.cancel_button.clicked.connect(self.cancel_instance)
+
+    def create_instance(self):
+        print("Instance created")
+
+    def cancel_instance(self):
+        print("Cancel button pressed")
+
+
 class MainWindow(QMainWindow):
     def __init__(self, *args):
         QMainWindow.__init__(self, *args)
@@ -200,6 +266,8 @@ class MainWindow(QMainWindow):
 
     def add_instance(self):
         print("Add Button Clicked")
+        self.addWindow = AddInstanceWindow(self)
+        self.addWindow.show()
 
     def save_file(self):
         print(self.currentDate)
