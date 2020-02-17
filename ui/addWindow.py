@@ -72,6 +72,7 @@ class AddInstanceWindow(QMainWindow):
         print("Create Clicked")
         text = self.instanceLine.text()
         __main__.window.create_new_instance(text)
+        self.close()
 
     def close_window(self):
         print("Cancel button pressed")

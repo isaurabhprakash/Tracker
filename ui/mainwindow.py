@@ -1,13 +1,15 @@
-from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
-from PyQt5.QtWidgets import QLabel, QWidget, \
-    QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QCalendarWidget, \
-    QSlider, QDoubleSpinBox, QMainWindow, QShortcut, QListWidget
-from PyQt5.QtGui import QPalette, QColor, QIcon, QFont, QKeySequence
+
+from PyQt5.QtCore import QDate
+from PyQt5.QtGui import QFont, QPalette, QColor
+from PyQt5.QtWidgets import QGridLayout, QCalendarWidget, QDoubleSpinBox, QSlider
+
 from ui.addWindow import *
 from ui.openwindow import *
 
 from database.datafile import *
+
+months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 class MainWindow(QMainWindow):
@@ -51,8 +53,6 @@ class MainWindow(QMainWindow):
         self.save_button = " "
 
         # Variables used in the program
-        self.currentDate = " "
-        print(self.currentDate)
         self.size_policy_right_upper = " "
         self.size_policy_right_lower = " "
 
@@ -68,7 +68,7 @@ class MainWindow(QMainWindow):
     def initialize_variables(self, pInstanceName=None):
 
         if pInstanceName is None:
-            # Check if this is the first instance being created
+            # Check if this is not the first instance being created. Executed during loading.
             if len([name for name in os.listdir('./logs') if os.path.isfile(name)]) is not 0:
                 # TODO: There are existing logs. Open the trkr file to know the last instance the user was working on
                 self._trkr = DataFile("trkr")
@@ -81,19 +81,24 @@ class MainWindow(QMainWindow):
             else:
                 # First time
                 self.currentInstance = None
-                self.currentInstanceName = " "
-                self.lastInstanceName = " "
-                self.lastModifiedDate = " "
-                self.lastValue = " "
-                self.currentSliderValue = " "
+                self.currentInstanceName = "********"
+                self.lastInstanceName = "********"
+                self.lastModifiedDate = "********"
+                self.lastValue = "********"
+                self.currentSliderValue = "********"
         else:  # User is creating a new instance
             self.lastInstanceName = self.prevInstanceName
             self.currentInstanceName = pInstanceName
             self.currentInstance = DataFile(self.currentInstanceName)
-            self.lastModifiedDate = " "
-            self.lastValue = " "
+            self.lastModifiedDate = "********"
+            self.lastValue = "********"
 
         self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
+        print(self.current_year)
+        print(self.current_month)
+        print(self.current_date)
+        self.currentDate = str(self.current_date) + " " + str(months[self.current_month - 1]) + " " + str(
+            self.current_year)
         self.currentSliderValue = 70  # TODO: If currenDate has a value, show that
 
     def create_new_instance(self, pInstanceName=None):
@@ -104,6 +109,12 @@ class MainWindow(QMainWindow):
         # Set the currentInstance name and create the new file
         if pInstanceName is not None:
             self.initialize_variables(pInstanceName)
+            self.set_label_names()
+
+    def set_label_names(self):
+        self.label_top.setText("Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
+            self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
+        self.label_down.setText("\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentSliderValue))
 
     def create_layout(self):
         # _______________________________________________________________
@@ -180,12 +191,14 @@ class MainWindow(QMainWindow):
 
     def create_labels(self):
         self.label_top = QLabel(self.cw)
-        self.label_top.setText("Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
-            self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
-
         self.label_down = QLabel(self.cw)
-        self.label_down.setText("\n\nDate : " + str(self.currentDate) + "\nValue : " + str(self.currentSliderValue))
+        self.set_label_names()
         self.label_down.setFont(QFont("Times", 12, QFont.Black))
+
+    def change_date(self):
+        self.set_current_date()
+        print(self.currentDate)
+        self.set_label_names()
 
     def get_calendar_widget(self):
 
@@ -194,6 +207,7 @@ class MainWindow(QMainWindow):
         self.calendar.setSelectedDate(QDate(self.current_year, self.current_month, self.current_date))
         self.calendar.clicked.connect(self.set_current_date)
         self.set_current_date()
+        self.calendar.selectionChanged.connect(self.change_date)
         return self.calendar
 
     def get_slider(self):
@@ -246,8 +260,10 @@ class MainWindow(QMainWindow):
         self.save_button.setShortcut(QKeySequence(Qt.Key_S))
 
     def set_current_date(self):
-        self.currentDate = int(self.calendar.selectedDate().toString("yyyy.MM.dd").replace('.', ''))
-        print(self.currentDate)
+        self.current_date, self.current_month, self.current_year = self.calendar.selectedDate().toString(
+            'dd-MM-yyyy').split('-')
+        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
+            self.current_year)
 
     def set_current_slider_value(self, current_value):
         self.currentSliderValue = int(60 + (current_value / 10))
@@ -283,9 +299,18 @@ class MainWindow(QMainWindow):
         print("Plotting Graph")
 
     def save_file(self):
+        # This is what will be written to the disk. Needs to be an integer by design
+        self.lastModifiedDate = int(self.calendar.selectedDate().toString("yyyyMMdd"))
+        self.set_current_date()
         print(self.currentDate)
-        print(self.currentSliderValue)
-        self.currentInstance.write_field(self.currentDate, self.currentSliderValue)
+
+        self.lastValue = self.currentSliderValue
+
+        self.currentInstance.write_field(self.lastModifiedDate, self.currentSliderValue)
+
+        self.lastModifiedDate = self.currentDate
+
+        self.set_label_names()
 
 
 def get_dark_palette():

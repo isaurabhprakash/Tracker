@@ -28,8 +28,8 @@ class DataFile:
         return self._file
 
     def write_field(self, pFieldId, pValue):
-        self._file.write(struct.pack('i', pFieldId))
-        self._file.write(struct.pack('i', pValue))
+        self._file.write(struct.pack('i', int(pFieldId)))
+        self._file.write(struct.pack('i', int(pValue)))
         self._file.flush()
 
     # Since everything is to be brought in-memory, we read the entire file.
