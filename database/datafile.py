@@ -22,6 +22,7 @@ class DataFile:
             self._file = open(pFileName, "rb+")
             self._file.seek(0, os.SEEK_END)
         else:
+            pFileName = "./logs/"+str(pFileName)
             self._file = open(pFileName, "wb+")
 
         return self._file

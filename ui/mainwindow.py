@@ -14,20 +14,18 @@ class MainWindow(QMainWindow):
     def __init__(self, *args):
         QMainWindow.__init__(self, *args)
 
+        # Set the window properties
+        self.set_window_properties()
+
+        # Initialize Variables
+        self.initialize_variables()
+
         # Set the central widget. Everything will be on top of this.
         self.cw = QWidget(self)
         self.setCentralWidget(self.cw)
 
-        # Set the window properties
-        self.setWindowTitle('Tracker')
-        self.setWindowIcon(QIcon('logo.png'))
-        self.setGeometry(0, 0, 800, 600)
-        self.setStyleSheet("QPushButton { font-size: 10pt;font-weight: bold}")
+        self.create_new_instance()
 
-        # Read the last instance from trkr file
-        pLastInstance = "saurabh.trkr"
-        self.currentInstanceName = "Saurabh"
-        self.currentInstance = DataFile(pLastInstance)
         # Write last instance to trk file
 
         # Child widgets on top of Central Widget
@@ -53,9 +51,6 @@ class MainWindow(QMainWindow):
         self.save_button = " "
 
         # Variables used in the program
-        self.lastModifiedDate = "Feb - 2 - 2020"
-        self.lastValue = "110"
-        self.currentSliderValue = 70
         self.currentDate = " "
         print(self.currentDate)
         self.size_policy_right_upper = " "
@@ -63,6 +58,52 @@ class MainWindow(QMainWindow):
 
         # Create the layouts and the widgets contained in it
         self.create_layout()
+
+    def set_window_properties(self):
+        self.setWindowTitle('Tracker')
+        self.setWindowIcon(QIcon('logo.png'))
+        self.setGeometry(0, 0, 800, 600)
+        self.setStyleSheet("QPushButton { font-size: 10pt;font-weight: bold}")
+
+    def initialize_variables(self, pInstanceName=None):
+
+        if pInstanceName is None:
+            # Check if this is the first instance being created
+            if len([name for name in os.listdir('./logs') if os.path.isfile(name)]) is not 0:
+                # TODO: There are existing logs. Open the trkr file to know the last instance the user was working on
+                self._trkr = DataFile("trkr")
+                self.currentInstanceName = "saurabh.trkr"  # TODO: Read this from trkr
+                self.lastInstanceName = self.currentInstanceName
+                self.currentInstance = DataFile(self.currentInstanceName)  # TODO: Open the already existing file
+
+                self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
+                self.lastValue = 110  # TODO: Read this from self.currentInstance
+            else:
+                # First time
+                self.currentInstance = None
+                self.currentInstanceName = " "
+                self.lastInstanceName = " "
+                self.lastModifiedDate = " "
+                self.lastValue = " "
+                self.currentSliderValue = " "
+        else:  # User is creating a new instance
+            self.lastInstanceName = self.prevInstanceName
+            self.currentInstanceName = pInstanceName
+            self.currentInstance = DataFile(self.currentInstanceName)
+            self.lastModifiedDate = " "
+            self.lastValue = " "
+
+        self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
+        self.currentSliderValue = 70  # TODO: If currenDate has a value, show that
+
+    def create_new_instance(self, pInstanceName=None):
+        # Close the currently opened file
+        if self.currentInstance is not None:
+            self.currentInstance.close_file()
+
+        # Set the currentInstance name and create the new file
+        if pInstanceName is not None:
+            self.initialize_variables(pInstanceName)
 
     def create_layout(self):
         # _______________________________________________________________
@@ -81,6 +122,9 @@ class MainWindow(QMainWindow):
         # | Slider      |  DoubleSpin   |                               |
         # |             |     Box       |   Settings       Icon         |
         # |_____________|_______________|_______________________________|
+
+        # First we create all the labels we are going to use
+        self.create_labels()
 
         # MainLayout : The entire layout
         self.main_layout = QHBoxLayout(self.cw)
@@ -108,19 +152,8 @@ class MainWindow(QMainWindow):
         self.right_upper_layout = QVBoxLayout(self.cw)
         self.right_upper_layout.addStretch(1)
         self.right_upper_layout.setAlignment(Qt.AlignTop)
-        self.right_upper_layout.addWidget(QLabel(
-            "Instance : " + self.currentInstanceName + "\nLast modified on : " + self.lastModifiedDate + "\nLast "
-                                                                                                         "value : " +
-            self.lastValue))
-
-        selectedDate = QLabel("\n\nSelcted Date : 2 Feb 2020")
-        selectedDate.setFont(QFont("Times", 12, QFont.Black))
-
-        valueOnSelectedDate = QLabel("Value on the date: 110")
-        valueOnSelectedDate.setFont(QFont("Times", 12, QFont.Black))
-
-        self.right_upper_layout.addWidget(selectedDate)
-        self.right_upper_layout.addWidget(valueOnSelectedDate)
+        self.right_upper_layout.addWidget(self.label_top)
+        self.right_upper_layout.addWidget(self.label_down)
 
         # RightLowerLayout : Layout containing buttons and settings
         self.right_lower_layout = QVBoxLayout(self.cw)
@@ -145,12 +178,20 @@ class MainWindow(QMainWindow):
         # MainLayout is what we are using
         self.cw.setLayout(self.main_layout)
 
+    def create_labels(self):
+        self.label_top = QLabel(self.cw)
+        self.label_top.setText("Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
+            self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
+
+        self.label_down = QLabel(self.cw)
+        self.label_down.setText("\n\nDate : " + str(self.currentDate) + "\nValue : " + str(self.currentSliderValue))
+        self.label_down.setFont(QFont("Times", 12, QFont.Black))
+
     def get_calendar_widget(self):
-        current_year, current_month, current_date = map(int, list(str(datetime.now().date()).split('-')))
 
         self.calendar = QCalendarWidget(self.cw)
         self.calendar.setGridVisible(True)
-        self.calendar.setSelectedDate(QDate(current_year, current_month, current_date))
+        self.calendar.setSelectedDate(QDate(self.current_year, self.current_month, self.current_date))
         self.calendar.clicked.connect(self.set_current_date)
         self.set_current_date()
         return self.calendar
@@ -215,8 +256,17 @@ class MainWindow(QMainWindow):
 
     def add_instance(self):
         print("Add Button Clicked")
+
+        # Save the current instance name. This will be used to know if the user has actually created
+        # a new instance from the AddInstanceWindow
+        self.prevInstanceName = self.currentInstanceName
         self.addWindow = AddInstanceWindow(self)
         self.addWindow.show()
+
+        print(self.currentInstanceName)
+        # User has actually created a new instance
+        if self.currentInstanceName != self.prevInstanceName:
+            self.create_new_instance(self.currentInstanceName)
 
     def open_instance(self):
         print("Opening instance")
@@ -236,14 +286,6 @@ class MainWindow(QMainWindow):
         print(self.currentDate)
         print(self.currentSliderValue)
         self.currentInstance.write_field(self.currentDate, self.currentSliderValue)
-
-    def create_new_instance(self, pInstanceName):
-        # Close the currently opened file
-        self.currentInstance.close()
-
-        # Set the currentInstance name and create the new file
-        self.currentInstanceName = pInstanceName
-        self.currentInstance = DataFile(self.currentInstanceName)
 
 
 def get_dark_palette():

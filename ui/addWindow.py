@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QShortcut, QLineEdit, QPushButton
 
 import __main__
+from __main__ import *
 
 
 class AddInstanceWindow(QMainWindow):
@@ -68,8 +69,9 @@ class AddInstanceWindow(QMainWindow):
         self.create_button.setShortcut(QKeySequence(Qt.Key_Return))
 
     def create_instance(self):
+        print("Create Clicked")
         text = self.instanceLine.text()
-        __main__.window.currentInstanceName = text
+        __main__.window.create_new_instance(text)
 
     def close_window(self):
         print("Cancel button pressed")
