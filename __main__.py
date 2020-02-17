@@ -1,4 +1,4 @@
-from ui.ui import *
+from ui.mainwindow import *
 from PyQt5.QtWidgets import QApplication
 
 if __name__ == '__main__':
@@ -6,7 +6,7 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     app.setPalette(get_dark_palette())
 
-    windows = MainWindow()
-    windows.show()
+    window = MainWindow()
+    window.show()
 
     app.exec_()

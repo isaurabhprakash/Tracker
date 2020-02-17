@@ -37,3 +37,7 @@ class DataFile:
         self._file.seek(0, os.SEEK_SET)
         readData = np.fromfile(self._file, dtype=int)
         return [readData[x:x + 2] for x in range(0, len(readData), 2)]
+
+    def close_file(self):
+        self._file.flush()
+        self._file.close()

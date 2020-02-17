@@ -1,170 +1,13 @@
-from PyQt5.QtCore import Qt, QDate, pyqtSignal
+from PyQt5.QtCore import Qt, QDate
 from datetime import datetime
 from PyQt5.QtWidgets import QLabel, QWidget, \
-    QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLineEdit, QCalendarWidget, \
-    QSlider, QDoubleSpinBox, QMainWindow, QShortcut, QFileDialog, QScrollArea, QGroupBox, QFormLayout, QListWidget
+    QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QCalendarWidget, \
+    QSlider, QDoubleSpinBox, QMainWindow, QShortcut, QListWidget
 from PyQt5.QtGui import QPalette, QColor, QIcon, QFont, QKeySequence
+from ui.addWindow import *
+from ui.openwindow import *
 
 from database.datafile import *
-
-
-class AddInstanceWindow(QMainWindow):
-    def __init__(self, mainWindow):
-        QWidget.__init__(self)
-
-        # Set the window properties
-        self.setWindowTitle("Create a new Instance")
-        self.setWindowIcon(QIcon('logo.png'))
-        self.setGeometry(300, 300, 600, 100)
-
-        # Create the central widget
-        self.cw = QWidget()
-        self.setCentralWidget(self.cw)
-
-        # Now create the central widget
-        # |----------------------------------------|
-        # |                                        |
-        # |   Name :   [....................]      |
-        # |                                        |
-        # |                 [CREATE]   [Cancel]    |
-        # |----------------------------------------|
-
-        # Create the buttons that will be used in the window
-        self.create_lineedit()
-        self.create_buttons()
-
-        self.main_layout = QVBoxLayout(self.cw)
-
-        # Create the upper layout - Containing Name
-        self.upper_layout = QHBoxLayout(self.cw)
-        self.upper_layout.addWidget(QLabel('Name\t'))
-        self.upper_layout.addWidget(self.instanceLine)
-
-        # Create the layout containing Create and Cancel buttons
-        self.lower_layout = QHBoxLayout(self.cw)
-
-        self.empty_lower_layout = QHBoxLayout()
-        self.empty_lower_layout.addStretch(3)
-
-        self.right_lower_layout = QHBoxLayout(self.cw)
-        self.right_lower_layout.addWidget(self.create_button)
-
-        self.lower_layout.addLayout(self.empty_lower_layout)
-        self.lower_layout.addLayout(self.right_lower_layout)
-
-        # Add the children layouts to the main layout
-        self.main_layout.addLayout(self.upper_layout)
-        self.main_layout.addLayout(self.lower_layout)
-        self.setStyleSheet("QPushButton { background-color: maroon }")
-        self.setLayout(self.main_layout)
-
-        self.escape = QShortcut(QKeySequence(Qt.Key_Escape), self.cw)
-        self.escape.activated.connect(self.close_window)
-
-    def create_lineedit(self):
-        self.instanceLine = QLineEdit(self.cw)
-        self.instanceLine.returnPressed.connect(self.create_instance)
-
-    def create_buttons(self):
-        self.create_button = QPushButton("Create", self.cw)
-        self.create_button.clicked.connect(self.create_instance)
-        self.create_button.setShortcut(QKeySequence(Qt.Key_Return))
-
-    def create_instance(self):
-        print("Instance created")
-
-    def close_window(self):
-        print("Cancel button pressed")
-        self.close()
-
-
-class InstanceSelectionWindow(QMainWindow):
-    def __init__(self, mainWindow):
-        QWidget.__init__(self)
-
-        # Set the window properties
-        self.setWindowTitle("Open Tracker Log")
-        self.setWindowIcon(QIcon('logo.png'))
-        self.setGeometry(300, 300, 600, 100)
-
-        # Create the central widget
-        self.cw = QWidget()
-        self.setCentralWidget(self.cw)
-
-        # Create the buttons in the layout
-        self.create_buttons()
-
-        # Now create the actual window
-        self.create_layout()
-
-        self.escape = QShortcut(QKeySequence(Qt.Key_Escape), self.cw)
-        self.escape.activated.connect(self.close_window)
-
-    # |----------------------------------------------------------------|
-    # |                                                                |
-    # |   Location :   [........................]  [ChangeLocation]    |
-    # |                                                                |
-    # |                 [------------------------]                     |
-    # |                 [------------------------]                     |
-    # |                 [------------------------]                     |
-    # |                 [   Scrollable Area      ]                     |
-    # |                 [------------------------]                     |
-    # |                 [------------------------]                     |
-    # |                 [------------------------]                     |
-    # |                                             [Open]             |
-    # |----------------------------------------------------------------|
-    def create_layout(self):
-        # The main layout that contains all the other layouts
-        self.main_layout = QVBoxLayout(self.cw)
-
-        # Create the upper layout containing Location and Location Selector icon
-        self.upper_layout = QHBoxLayout()
-        self.upper_layout.addWidget(QLabel('Location'))
-        self.upper_layout.addWidget(QLineEdit('saurabh.trkr'))
-
-        self.openIconButton = QPushButton()
-        self.openIconButton.setIcon(QIcon('open.png'))
-
-        self.upper_layout.addWidget(self.openIconButton)
-
-        # Create the list widget containing the list of instances
-        self.listWidget = QListWidget()
-        self.listWidget.setFocus(Qt.OtherFocusReason)
-        #self.listWidget.setFixedHeight(200)
-        self.listWidget.addItem("Saurabh")
-        self.listWidget.addItem("Prakash")
-        self.listWidget.addItem("Item3")
-        self.listWidget.addItem("Item4")
-        self.listWidget.addItem("Item5")
-        self.listWidget.addItem("Item6")
-        self.listWidget.addItem("Item7")
-        self.listWidget.addItem("Item8")
-        self.listWidget.addItem("Item9")
-        self.listWidget.addItem("Item10")
-        self.listWidget.addItem("Item11")
-
-        # Create the bottom layout containing the Open Log button
-        self.bottom_layout = QHBoxLayout(self.cw)
-        self.bottom_layout.addLayout(QHBoxLayout())
-        self.bottom_layout.addWidget(self.openLog_button)
-
-        # Add all the children layout to the main layout
-        self.main_layout.addLayout(self.upper_layout)
-        self.main_layout.addWidget(self.listWidget)
-        self.listWidget.setFocus(Qt.OtherFocusReason)
-        self.main_layout.addLayout(self.bottom_layout)
-
-        self.cw.setLayout(self.main_layout)
-
-    def create_buttons(self):
-        self.openLog_button = QPushButton('Open Log')
-        self.openLog_button.setStyleSheet("background-color : maroon")
-        self.openLog_button.setShortcut(QKeySequence(Qt.Key_Return))
-
-
-    def close_window(self):
-        print('Escape Pressed')
-        self.close()
 
 
 class MainWindow(QMainWindow):
@@ -185,6 +28,7 @@ class MainWindow(QMainWindow):
         pLastInstance = "saurabh.trkr"
         self.currentInstanceName = "Saurabh"
         self.currentInstance = DataFile(pLastInstance)
+        # Write last instance to trk file
 
         # Child widgets on top of Central Widget
         self.calendar = " "
@@ -392,6 +236,14 @@ class MainWindow(QMainWindow):
         print(self.currentDate)
         print(self.currentSliderValue)
         self.currentInstance.write_field(self.currentDate, self.currentSliderValue)
+
+    def create_new_instance(self, pInstanceName):
+        # Close the currently opened file
+        self.currentInstance.close()
+
+        # Set the currentInstance name and create the new file
+        self.currentInstanceName = pInstanceName
+        self.currentInstance = DataFile(self.currentInstanceName)
 
 
 def get_dark_palette():
