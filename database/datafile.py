@@ -20,9 +20,12 @@ class DataFile:
         # create the file.
         if os.path.isfile(pFileName):
             self._file = open(pFileName, "rb+")
-            self._file.seek(0, os.SEEK_END)
+
+            # First we will bring all the data in memory and then write all back to the file
+            # in case of modification
+            self._file.seek(0, os.SEEK_SET)
         else:
-            pFileName = "./logs/"+str(pFileName)
+            pFileName = str(pFileName)
             self._file = open(pFileName, "wb+")
 
         return self._file
@@ -38,6 +41,17 @@ class DataFile:
         self._file.seek(0, os.SEEK_SET)
         readData = np.fromfile(self._file, dtype=int)
         return [readData[x:x + 2] for x in range(0, len(readData), 2)]
+
+    def read_ini_file(self):
+        return self._file.read()
+
+    def write_ini_file(self, pInstanceName):
+        # So that we don't end up writing a number of last instances
+        self._file.seek(0)
+        self._file.truncate(0)
+
+        self._file.write(pInstanceName.encode('ascii'))
+        self._file.flush()
 
     def close_file(self):
         self._file.flush()

@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.cw = QWidget(self)
         self.setCentralWidget(self.cw)
 
-        self.create_new_instance()
+        # self.create_new_instance(True, False)
 
         # Write last instance to trk file
 
@@ -70,13 +70,14 @@ class MainWindow(QMainWindow):
 
         if pInstanceName is None:
             # Check if this is not the first instance being created. Executed during loading.
-            if len([name for name in os.listdir('./logs') if os.path.isfile(name)]) is not 0:
-                # TODO: There are existing logs. Open the trkr file to know the last instance the user was working on
-                self._trkr = DataFile("trkr")
-                self.currentInstanceName = "saurabh.trkr"  # TODO: Read this from trkr
-                self.lastInstanceName = self.currentInstanceName
-                self.currentInstance = DataFile(self.currentInstanceName)  # TODO: Open the already existing file
+            if len([name for name in os.listdir('./logs/') if os.path.isfile(os.path.join('./logs/', name))]) is not 0:
+                # There are existing logs. Open the trkr file to know the last instance the user was working on
+                self._trkr = DataFile("./logs/trkr")
+                self.lastInstanceName = self._trkr.read_ini_file().decode('UTF-8')
+                self.currentInstanceName = self.lastInstanceName
+                self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
 
+                # self.read_instance_from_disk() #Todo: Implement this. Should use DataFile class
                 self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
                 self.lastValue = 110  # TODO: Read this from self.currentInstance
             else:
@@ -87,12 +88,15 @@ class MainWindow(QMainWindow):
                 self.lastModifiedDate = "********"
                 self.lastValue = "********"
                 self.currentSliderValue = "********"
+                # First time ever. Create the ini file
+                self._trkr = DataFile("./logs/trkr")
         else:  # User is creating a new instance
-            self.lastInstanceName = self.prevInstanceName
+            self.lastInstanceName = self.currentInstanceName
             self.currentInstanceName = pInstanceName
-            self.currentInstance = DataFile(self.currentInstanceName)
+            self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
             self.lastModifiedDate = "********"
             self.lastValue = "********"
+            self._trkr.write_ini_file(self.lastInstanceName)
 
         self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
         print(self.current_year)
@@ -105,7 +109,7 @@ class MainWindow(QMainWindow):
     def create_new_instance(self, pInstanceName=None):
         # Close the currently opened file
         if self.currentInstance is not None:
-            self.currentInstance.close_file()
+           self.currentInstance.close_file()
 
         # Set the currentInstance name and create the new file
         if pInstanceName is not None:
@@ -331,6 +335,7 @@ class MainWindow(QMainWindow):
 
     def save_file(self):
         # This is what will be written to the disk. Needs to be an integer by design
+        self._trkr.write_ini_file(self.currentInstanceName)
         self.lastModifiedDate = int(self.calendar.selectedDate().toString("yyyyMMdd"))
         self.set_current_date()
         print(self.currentDate)
