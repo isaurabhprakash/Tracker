@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QGridLayout, QCalendarWidget, QDoubleSpinBox, QSlide
 
 from ui.addWindow import *
 from ui.openwindow import *
+from ui.closewindow import *
 
 from database.datafile import *
 
@@ -217,15 +218,50 @@ class MainWindow(QMainWindow):
         self.slider.setValue(70)
         self.slider.setTickPosition(2)
         self.slider.setSingleStep(1)
-        self.slider.setPageStep(5)
+        #self.slider.setPageStep(5)
 
         self.slider.valueChanged.connect(lambda x: self.set_current_slider_value(x))
+
         return self.slider
+
+    def set_current_slider_value(self, pCurrentValue, fromDoubleSpinBox=False):
+        print("\n\n--Passed Value : " + str(pCurrentValue) + "\n\n")
+
+        self.currentSliderValue = int(60 + (pCurrentValue / 10))
+
+        # Block signals so that vlaueChanged signal is not trigerred for QDoubleSpingBox.
+        # Else there will be a cyclic situaton
+        if not fromDoubleSpinBox:
+            self.doubleSpinBox.blockSignals(True)
+            self.doubleSpinBox.setValue(self.currentSliderValue)
+            self.doubleSpinBox.blockSignals(False)
+
+        if fromDoubleSpinBox:
+            self.slider.blockSignals(True)
+            self.slider.setValue(pCurrentValue)
+            self.slider.blockSignals(False)
+
+        print("Current Slider Value : " + str(pCurrentValue) + "   Weight : " + str(self.currentSliderValue))
+
+    def set_double_spin_box_value(self, pCurrentValue):
+        pCurrentValue = (pCurrentValue - 60) * 10
+
+        self.set_current_slider_value(pCurrentValue, True)
+
+        print("Current Slider Value : " + str(pCurrentValue) + "   Weight : " + str(self.currentSliderValue))
 
     def get_double_spin_box(self):
         self.doubleSpinBox = QDoubleSpinBox(self.cw)
-        self.doubleSpinBox.setValue(self.currentSliderValue)
         self.doubleSpinBox.setMaximum(120.0)
+
+        # We don't want to trigger valueChanged signal here.
+        # When value changes in QSpinBox, same should be reflected in QSlider
+        self.doubleSpinBox.blockSignals(True)
+        self.doubleSpinBox.setValue(self.currentSliderValue)
+        self.doubleSpinBox.blockSignals(False)
+
+        self.doubleSpinBox.valueChanged.connect(lambda x: self.set_double_spin_box_value(x))
+
         return self.doubleSpinBox
 
     def create_buttons(self):
@@ -264,11 +300,6 @@ class MainWindow(QMainWindow):
             'dd-MM-yyyy').split('-')
         self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
             self.current_year)
-
-    def set_current_slider_value(self, current_value):
-        self.currentSliderValue = int(60 + (current_value / 10))
-        self.doubleSpinBox.setValue(self.currentSliderValue)
-        print("Current Slider Value : " + str(current_value) + "   Weight : " + str(self.currentSliderValue))
 
     def add_instance(self):
         print("Add Button Clicked")
@@ -311,6 +342,10 @@ class MainWindow(QMainWindow):
         self.lastModifiedDate = self.currentDate
 
         self.set_label_names()
+
+    def close_window(self):
+        self.closeWindow = CloseWindow(self)
+        self.closeWindow.show()
 
 
 def get_dark_palette():
