@@ -12,7 +12,7 @@ class AddInstanceWindow(QMainWindow):
 
         # Set the window properties
         self.setWindowTitle("Create a new Instance")
-        self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowIcon(QIcon('./resources/logo.png'))
         self.setGeometry(300, 300, 600, 100)
 
         # Create the central widget

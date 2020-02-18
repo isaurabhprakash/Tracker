@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
 
     def set_window_properties(self):
         self.setWindowTitle('Tracker')
-        self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowIcon(QIcon('./resources/logo.png'))
         self.setGeometry(0, 0, 800, 600)
         self.setStyleSheet("QPushButton { font-size: 10pt;font-weight: bold}")
 

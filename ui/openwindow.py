@@ -10,7 +10,7 @@ class InstanceSelectionWindow(QMainWindow):
 
         # Set the window properties
         self.setWindowTitle("Open Tracker Log")
-        self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowIcon(QIcon('./resources/logo.png'))
         self.setGeometry(300, 300, 600, 100)
 
         # Create the central widget
@@ -49,7 +49,7 @@ class InstanceSelectionWindow(QMainWindow):
         self.upper_layout.addWidget(QLineEdit('saurabh.trkr'))
 
         self.openIconButton = QPushButton()
-        self.openIconButton.setIcon(QIcon('open.png'))
+        self.openIconButton.setIcon(QIcon('./resources/open.png'))
 
         self.upper_layout.addWidget(self.openIconButton)
 
