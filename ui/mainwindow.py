@@ -46,8 +46,6 @@ class MainWindow(QMainWindow):
         self.right_lower_layout = " "
 
         # Buttons on the central widget
-        self.add_button = " "
-        self.open_button = " "
         self.import_button = " "
         self.showlog_button = " "
         self.plot_button = " "
@@ -77,7 +75,7 @@ class MainWindow(QMainWindow):
                 self.currentInstanceName = self.lastInstanceName
                 self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
 
-                # self.read_instance_from_disk() #Todo: Implement this. Should use DataFile class
+                self.read_instance_from_disk()  # Todo: Implement this. Should use DataFile class
                 self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
                 self.lastValue = 110  # TODO: Read this from self.currentInstance
             else:
@@ -99,17 +97,18 @@ class MainWindow(QMainWindow):
             self._trkr.write_ini_file(self.lastInstanceName)
 
         self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
-        print(self.current_year)
-        print(self.current_month)
-        print(self.current_date)
         self.currentDate = str(self.current_date) + " " + str(months[self.current_month - 1]) + " " + str(
             self.current_year)
         self.currentSliderValue = 70  # TODO: If currenDate has a value, show that
 
+    def read_instance_from_disk(self):
+        self.data = self.currentInstance.read_file()
+        print(self.data)
+
     def create_new_instance(self, pInstanceName=None):
         # Close the currently opened file
         if self.currentInstance is not None:
-           self.currentInstance.close_file()
+            self.currentInstance.close_file()
 
         # Set the currentInstance name and create the new file
         if pInstanceName is not None:
@@ -222,15 +221,13 @@ class MainWindow(QMainWindow):
         self.slider.setValue(70)
         self.slider.setTickPosition(2)
         self.slider.setSingleStep(1)
-        #self.slider.setPageStep(5)
+        # self.slider.setPageStep(5)
 
         self.slider.valueChanged.connect(lambda x: self.set_current_slider_value(x))
 
         return self.slider
 
     def set_current_slider_value(self, pCurrentValue, fromDoubleSpinBox=False):
-        print("\n\n--Passed Value : " + str(pCurrentValue) + "\n\n")
-
         self.currentSliderValue = int(60 + (pCurrentValue / 10))
 
         # Block signals so that vlaueChanged signal is not trigerred for QDoubleSpingBox.
@@ -245,14 +242,9 @@ class MainWindow(QMainWindow):
             self.slider.setValue(pCurrentValue)
             self.slider.blockSignals(False)
 
-        print("Current Slider Value : " + str(pCurrentValue) + "   Weight : " + str(self.currentSliderValue))
-
     def set_double_spin_box_value(self, pCurrentValue):
         pCurrentValue = (pCurrentValue - 60) * 10
-
         self.set_current_slider_value(pCurrentValue, True)
-
-        print("Current Slider Value : " + str(pCurrentValue) + "   Weight : " + str(self.currentSliderValue))
 
     def get_double_spin_box(self):
         self.doubleSpinBox = QDoubleSpinBox(self.cw)
@@ -314,7 +306,6 @@ class MainWindow(QMainWindow):
         self.addWindow = AddInstanceWindow(self)
         self.addWindow.show()
 
-        print(self.currentInstanceName)
         # User has actually created a new instance
         if self.currentInstanceName != self.prevInstanceName:
             self.create_new_instance(self.currentInstanceName)
@@ -338,10 +329,8 @@ class MainWindow(QMainWindow):
         self._trkr.write_ini_file(self.currentInstanceName)
         self.lastModifiedDate = int(self.calendar.selectedDate().toString("yyyyMMdd"))
         self.set_current_date()
-        print(self.currentDate)
 
         self.lastValue = self.currentSliderValue
-
         self.currentInstance.write_field(self.lastModifiedDate, self.currentSliderValue)
 
         self.lastModifiedDate = self.currentDate

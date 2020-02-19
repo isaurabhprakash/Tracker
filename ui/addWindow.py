@@ -71,7 +71,11 @@ class AddInstanceWindow(QMainWindow):
     def create_instance(self):
         print("Create Clicked")
         text = self.instanceLine.text()
-        __main__.window.create_new_instance(text)
+
+        # User has actually entered some name
+        if text != '':
+            __main__.window.create_new_instance(text)
+
         self.close()
 
     def close_window(self):

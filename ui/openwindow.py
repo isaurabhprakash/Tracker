@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence, QIcon
 from PyQt5.QtWidgets import QPushButton, QHBoxLayout, QListWidget, QLineEdit, QLabel, QVBoxLayout, QShortcut, QWidget, \
@@ -56,17 +58,7 @@ class InstanceSelectionWindow(QMainWindow):
         # Create the list widget containing the list of instances
         self.listWidget = QListWidget()
         self.listWidget.setFocus(Qt.OtherFocusReason)
-        self.listWidget.addItem("Saurabh")
-        self.listWidget.addItem("Prakash")
-        self.listWidget.addItem("Item3")
-        self.listWidget.addItem("Item4")
-        self.listWidget.addItem("Item5")
-        self.listWidget.addItem("Item6")
-        self.listWidget.addItem("Item7")
-        self.listWidget.addItem("Item8")
-        self.listWidget.addItem("Item9")
-        self.listWidget.addItem("Item10")
-        self.listWidget.addItem("Item11")
+        self.add_items_to_open_list()
 
         # Create the bottom layout containing the Open Log button
         self.bottom_layout = QHBoxLayout(self.cw)
@@ -85,6 +77,14 @@ class InstanceSelectionWindow(QMainWindow):
         self.openLog_button = QPushButton('Open Log')
         self.openLog_button.setStyleSheet("background-color : maroon")
         self.openLog_button.setShortcut(QKeySequence(Qt.Key_Return))
+
+    def add_items_to_open_list(self):
+        self.listWidget.clear()
+        instanceList = os.listdir('./logs/')
+        instanceList.sort()
+        for name in instanceList:
+            if os.path.isfile(os.path.join('./logs/', name)) and name != "trkr":
+                self.listWidget.addItem(name)
 
     def close_window(self):
         print('Escape Pressed')
