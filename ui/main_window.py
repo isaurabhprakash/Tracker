@@ -2,11 +2,11 @@ from datetime import datetime
 
 from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QFont, QPalette, QColor
-from PyQt5.QtWidgets import QGridLayout, QCalendarWidget, QDoubleSpinBox, QSlider
+from PyQt5.QtWidgets import QGridLayout, QCalendarWidget, QDoubleSpinBox, QSlider, QMessageBox
 
-from ui.addWindow import *
-from ui.openwindow import *
-from ui.closewindow import *
+from ui.add_window import *
+from ui.open_window import *
+from ui.close_window import *
 
 from database.datafile import *
 
@@ -57,6 +57,22 @@ class MainWindow(QMainWindow):
 
         # Create the layouts and the widgets contained in it
         self.create_layout()
+
+    def closeEvent(self, event, pWantToClose=False):
+        # Opens the close window. Event is passed so that closing the app can be done from the close window.
+        self.closeWindow = CloseWindow(self)
+        self.closeWindow.show()
+
+        if pWantToClose:
+            super(MainWindow, self).closeEvent(event)
+        else:
+            event.ignore()
+
+        # if self._want_to_close:
+        #   super(MainWindow, self).closeEvent(evnt)
+        # else:
+        #   evnt.ignore()
+        #  self.setWindowState(Qt.WindowMinimized)
 
     def set_window_properties(self):
         self.setWindowTitle('Tracker')
@@ -337,10 +353,12 @@ class MainWindow(QMainWindow):
 
         self.set_label_names()
 
-    def close_window(self):
-        self.closeWindow = CloseWindow(self)
-        self.closeWindow.show()
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.closeWindow = CloseWindow(self)
+            self.closeWindow.show()
 
+        event.accept()
 
 def get_dark_palette():
     dark_palette = QPalette()

@@ -1,4 +1,4 @@
-from ui.mainwindow import *
+from ui.main_window import *
 from PyQt5.QtWidgets import QApplication
 
 global window
