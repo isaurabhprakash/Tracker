@@ -4,6 +4,9 @@ import numpy as np
 
 
 # Right now we have fields that support just the int datatype
+from PyQt5.QtWidgets import QMessageBox
+
+
 class DataFile:
     def __init__(self, pFileName=None):
 
@@ -25,7 +28,6 @@ class DataFile:
             # in case of modification
             self._file.seek(0, os.SEEK_SET)
         else:
-            pFileName = str(pFileName)
             self._file = open(pFileName, "wb+")
 
         return self._file
