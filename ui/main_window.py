@@ -7,15 +7,20 @@ from PyQt5.QtWidgets import QGridLayout, QCalendarWidget, QDoubleSpinBox, QSlide
 from ui.add_window import *
 from ui.open_window import *
 from ui.close_window import *
-
 from database.datafile import *
+from algorithms.quicksort import *
 
 months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+gFromCloseWindow = False
 
 
 class MainWindow(QMainWindow):
     def __init__(self, *args):
         QMainWindow.__init__(self, *args)
+
+        # All the in-memory value will be kept here
+        self.data = []
 
         # Set the window properties
         self.set_window_properties()
@@ -27,52 +32,16 @@ class MainWindow(QMainWindow):
         self.cw = QWidget(self)
         self.setCentralWidget(self.cw)
 
-        # self.create_new_instance(True, False)
-
-        # Write last instance to trk file
-
-        # Child widgets on top of Central Widget
-        self.calendar = " "
-        self.slider = " "
-        self.doubleSpinBox = " "
-
-        # Layouts for the central widget
-        self.main_layout = " "
-        self.left_layout = " "
-        self.right_layout = " "
-        self.left_upper_layout = " "
-        self.left_lower_layout = " "
-        self.right_upper_layout = " "
-        self.right_lower_layout = " "
-
-        # Buttons on the central widget
-        self.import_button = " "
-        self.showlog_button = " "
-        self.plot_button = " "
-        self.save_button = " "
-
-        # Variables used in the program
-        self.size_policy_right_upper = " "
-        self.size_policy_right_lower = " "
-
         # Create the layouts and the widgets contained in it
         self.create_layout()
 
-    def closeEvent(self, event, pWantToClose=False):
+    def closeEvent(self, event):
         # Opens the close window. Event is passed so that closing the app can be done from the close window.
-        self.closeWindow = CloseWindow(self)
-        self.closeWindow.show()
-
-        if pWantToClose:
-            super(MainWindow, self).closeEvent(event)
+        if gFromCloseWindow is False:
+            self.closeWindow = CloseWindow(self)
+            self.closeWindow.show()
         else:
-            event.ignore()
-
-        # if self._want_to_close:
-        #   super(MainWindow, self).closeEvent(evnt)
-        # else:
-        #   evnt.ignore()
-        #  self.setWindowState(Qt.WindowMinimized)
+            super(MainWindow, self).closeEvent(event)
 
     def set_window_properties(self):
         self.setWindowTitle('Tracker')
@@ -89,13 +58,28 @@ class MainWindow(QMainWindow):
                 self._trkr = DataFile("./logs/trkr")
                 self.lastInstanceName = self._trkr.read_ini_file().decode('UTF-8')
                 self.currentInstanceName = self.lastInstanceName
-                self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-
-                self.read_instance_from_disk()  # Todo: Implement this. Should use DataFile class
-                self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
-                self.lastValue = 110  # TODO: Read this from self.currentInstance
+                if os.path.exists("./logs/" + str(self.currentInstanceName)) and self.currentInstanceName != "":
+                    self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
+                    self.read_instance_from_disk()  # Todo: Implement this. Should use DataFile class
+                    self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
+                    self.lastValue = 110  # TODO: Read this from self.currentInstance
+                else:
+                    # Someone has deleted the file manually. Create a fresh copy
+                    # Someone might have opened the software and closed it without doing anything.
+                    # In this case the trkr file gets generated but contains nothing. So currentInstanceName
+                    # would be ""
+                    if self.currentInstanceName != "":
+                        self.initialize_variables(self.currentInstanceName)
+                    else:
+                        self.currentInstance = None
+                        self.currentInstanceName = "********"
+                        self.lastInstanceName = "********"
+                        self.lastModifiedDate = "********"
+                        self.lastValue = "********"
+                        self.currentSliderValue = "********"
             else:
                 # First time
+                self._trkr = DataFile("./logs/trkr")
                 self.currentInstance = None
                 self.currentInstanceName = "********"
                 self.lastInstanceName = "********"
@@ -103,7 +87,6 @@ class MainWindow(QMainWindow):
                 self.lastValue = "********"
                 self.currentSliderValue = "********"
                 # First time ever. Create the ini file
-                self._trkr = DataFile("./logs/trkr")
         else:  # User is creating a new instance
             self.lastInstanceName = self.currentInstanceName
             self.currentInstanceName = pInstanceName
@@ -115,7 +98,7 @@ class MainWindow(QMainWindow):
         self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
         self.currentDate = str(self.current_date) + " " + str(months[self.current_month - 1]) + " " + str(
             self.current_year)
-        self.currentSliderValue = 70  # TODO: If currenDate has a value, show that
+        self.currentSliderValue = 70  # TODO: If currentDate has a value, show that
 
     def read_instance_from_disk(self):
         self.data = self.currentInstance.read_file()
@@ -304,7 +287,7 @@ class MainWindow(QMainWindow):
 
         self.save_button = QPushButton("Save", self.cw)
         self.save_button.setFixedSize(300, 60)
-        self.save_button.clicked.connect(self.save_file)
+        self.save_button.clicked.connect(self.save_data)
         self.save_button.setShortcut(QKeySequence(Qt.Key_S))
 
     def set_current_date(self):
@@ -340,18 +323,52 @@ class MainWindow(QMainWindow):
     def plot_graph(self):
         print("Plotting Graph")
 
-    def save_file(self):
-        # This is what will be written to the disk. Needs to be an integer by design
-        self._trkr.write_ini_file(self.currentInstanceName)
+    def save_data(self):
+        # Write the current instance name to the ini file so that
+        # the next time the software open, it opens this instance only.
+        if self.currentInstanceName != "********":
+            self._trkr.write_ini_file(self.currentInstanceName)
+
+        # Get the current date and set it to last modified date
+        # Last Modified Date is an integer representing the date
+        # This is what will be written to the disk.
         self.lastModifiedDate = int(self.calendar.selectedDate().toString("yyyyMMdd"))
+        print("Last modified date: " + str(self.lastModifiedDate))
+
+        # Current Date is what is shown on the software as a Label
         self.set_current_date()
 
         self.lastValue = self.currentSliderValue
-        self.currentInstance.write_field(self.lastModifiedDate, self.currentSliderValue)
 
+        # Write everything in memory
+        self.write_to_inmemory_list(self.lastModifiedDate, self.currentSliderValue)
+
+        print("Data : ", end='')
+        print(self.data)
+
+        # We have written the date to the in-memory data. Now, change
+        # it to a format in which it can be shown on the mainwindow for the
+        # last modified date label
         self.lastModifiedDate = self.currentDate
 
+        # We have the updated values. Show it on the main window.
         self.set_label_names()
+
+    def write_to_inmemory_list(self, pDate, pValue):
+        for i in self.data:
+            if i[0] == pDate:
+                i[1] = pValue
+                return
+        self.data.append([pDate, pValue])
+
+    def save_file(self):
+        global gFromCloseWindow
+        quicksort(self.data, 0, len(self.data) - 1)
+        for i in self.data:
+            self.currentInstance.write_field(i[0], i[1])
+
+        gFromCloseWindow = True
+        self.close()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
@@ -359,6 +376,7 @@ class MainWindow(QMainWindow):
             self.closeWindow.show()
 
         event.accept()
+
 
 def get_dark_palette():
     dark_palette = QPalette()

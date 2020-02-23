@@ -7,6 +7,7 @@ class CloseWindow(QMainWindow):
     def __init__(self, mainWindow):
         QWidget.__init__(self)
 
+        self.parentWindow = mainWindow
         # Set the window properties
         self.setWindowTitle("Create a new Instance")
         self.setWindowIcon(QIcon('resources/logo.png'))
@@ -50,11 +51,20 @@ class CloseWindow(QMainWindow):
 
     def create_buttons(self):
         self.save_and_exit_button = QPushButton("Save and exit")
-        self.save_and_exit_button.setAutoDefault(True)
+        self.save_and_exit_button.clicked.connect(self.save_file)
+        self.save_and_exit_button.setDefault(True)
+
         self.force_exit_button = QPushButton("Don't Save")
+        self.force_exit_button.clicked.connect(self.close_window)
+        self.force_exit_button.setAutoDefault(True)
 
         self.setStyleSheet("QPushButton { background-color: maroon }")
 
+    def save_file(self):
+        print("Save and Exit pressed")
+        self.parentWindow.save_file()
+        self.close()
+
     def close_window(self):
-        print("Cancel button pressed")
+        print("Force Exit button pressed")
         self.close()
