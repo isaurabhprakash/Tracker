@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
         if gFromCloseWindow is False:
             self.closeWindow = CloseWindow(self)
             self.closeWindow.show()
+            event.ignore()
         else:
             super(MainWindow, self).closeEvent(event)
 
@@ -60,7 +61,7 @@ class MainWindow(QMainWindow):
                 self.currentInstanceName = self.lastInstanceName
                 if os.path.exists("./logs/" + str(self.currentInstanceName)) and self.currentInstanceName != "":
                     self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-                    self.read_instance_from_disk()  # Todo: Implement this. Should use DataFile class
+                    self.read_instance_from_disk()
                     self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
                     self.lastValue = 110  # TODO: Read this from self.currentInstance
                 else:
@@ -102,7 +103,13 @@ class MainWindow(QMainWindow):
 
     def read_instance_from_disk(self):
         self.data = self.currentInstance.read_file()
-        print(self.data)
+        self.data = self.create_in_memory_data()
+
+    def create_in_memory_data(self):
+        l = []
+        for i in range(0, len(self.data), 2):
+            l.append([self.data[i], self.data[i+1]])
+        return l
 
     def create_new_instance(self, pInstanceName=None):
         # Close the currently opened file

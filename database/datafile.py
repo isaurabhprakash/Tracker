@@ -41,8 +41,12 @@ class DataFile:
     def read_file(self):
         # Move to the beginning of the file.
         self._file.seek(0, os.SEEK_SET)
+
+        # Since the written data is packed, numpy is being used to read it.
+        # Also, unlike struct, with numpy we can read the entire file into a list in one go.
         readData = np.fromfile(self._file, dtype=int)
-        return [readData[x:x + 2] for x in range(0, len(readData), 2)]
+        print("Read Data : ")
+        return readData
 
     def read_ini_file(self):
         return self._file.read()

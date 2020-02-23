@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QWidget, QShortcut, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel
 
+from ui import main_window
 
 class CloseWindow(QMainWindow):
     def __init__(self, mainWindow):
@@ -67,4 +68,6 @@ class CloseWindow(QMainWindow):
 
     def close_window(self):
         print("Force Exit button pressed")
+        main_window.gFromCloseWindow = True
+        self.parentWindow.close()
         self.close()
