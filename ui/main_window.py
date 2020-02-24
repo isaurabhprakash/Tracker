@@ -7,12 +7,16 @@ from PyQt5.QtWidgets import QGridLayout, QCalendarWidget, QDoubleSpinBox, QSlide
 from ui.add_window import *
 from ui.open_window import *
 from ui.close_window import *
+from ui.no_instance_window import *
+
 from database.datafile import *
 from algorithms.quicksort import *
 
 months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 gFromCloseWindow = False
+
+isChangeDone = False
 
 
 class MainWindow(QMainWindow):
@@ -38,9 +42,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         # Opens the close window. Event is passed so that closing the app can be done from the close window.
         if gFromCloseWindow is False:
-            self.closeWindow = CloseWindow(self)
-            self.closeWindow.show()
-            event.ignore()
+            if self.currentInstanceName != "********" and isChangeDone is True:
+                self.closeWindow = CloseWindow(self)
+                self.closeWindow.show()
+                event.ignore()
         else:
             super(MainWindow, self).closeEvent(event)
 
@@ -62,8 +67,9 @@ class MainWindow(QMainWindow):
                 if os.path.exists("./logs/" + str(self.currentInstanceName)) and self.currentInstanceName != "":
                     self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
                     self.read_instance_from_disk()
-                    self.lastModifiedDate = "2nd-Feb-2020"  # TODO: Read this from self.currentInstance
-                    self.lastValue = 110  # TODO: Read this from self.currentInstance
+                    self.lastModifiedDate = self.data[len(self.data) - 1][0]
+                    self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
+                    self.lastValue = self.data[len(self.data) - 1][1]
                 else:
                     # Someone has deleted the file manually. Create a fresh copy
                     # Someone might have opened the software and closed it without doing anything.
@@ -94,7 +100,8 @@ class MainWindow(QMainWindow):
             self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
             self.lastModifiedDate = "********"
             self.lastValue = "********"
-            self._trkr.write_ini_file(self.lastInstanceName)
+            if self.lastInstanceName != "********":
+                self._trkr.write_ini_file(self.lastInstanceName)
 
         self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
         self.currentDate = str(self.current_date) + " " + str(months[self.current_month - 1]) + " " + str(
@@ -108,7 +115,7 @@ class MainWindow(QMainWindow):
     def create_in_memory_data(self):
         l = []
         for i in range(0, len(self.data), 2):
-            l.append([self.data[i], self.data[i+1]])
+            l.append([self.data[i], self.data[i + 1]])
         return l
 
     def create_new_instance(self, pInstanceName=None):
@@ -331,6 +338,12 @@ class MainWindow(QMainWindow):
         print("Plotting Graph")
 
     def save_data(self):
+        if self.currentInstanceName == "********":
+            self.noInstanceWindow = NoInstanceWindow(self)
+            self.noInstanceWindow.show()
+            return
+        global isChangeDone
+        isChangeDone = True
         # Write the current instance name to the ini file so that
         # the next time the software open, it opens this instance only.
         if self.currentInstanceName != "********":
@@ -340,7 +353,6 @@ class MainWindow(QMainWindow):
         # Last Modified Date is an integer representing the date
         # This is what will be written to the disk.
         self.lastModifiedDate = int(self.calendar.selectedDate().toString("yyyyMMdd"))
-        print("Last modified date: " + str(self.lastModifiedDate))
 
         # Current Date is what is shown on the software as a Label
         self.set_current_date()
@@ -350,11 +362,10 @@ class MainWindow(QMainWindow):
         # Write everything in memory
         self.write_to_inmemory_list(self.lastModifiedDate, self.currentSliderValue)
 
-        print("Data : ", end='')
         print(self.data)
 
         # We have written the date to the in-memory data. Now, change
-        # it to a format in which it can be shown on the mainwindow for the
+        # it to a format in which it can be shown on the Main Window for the
         # last modified date label
         self.lastModifiedDate = self.currentDate
 
@@ -366,11 +377,28 @@ class MainWindow(QMainWindow):
             if i[0] == pDate:
                 i[1] = pValue
                 return
+
         self.data.append([pDate, pValue])
+
+    def convert_int_to_date(self, pDate):
+        currentDate = pDate % 100
+        pDate = pDate // 100
+        currentMonth = months[(pDate % 100) - 1]
+        pDate = pDate //100
+        currentYear = pDate
+        return str(currentDate) + " " + currentMonth + " " + str(currentYear)
 
     def save_file(self):
         global gFromCloseWindow
         quicksort(self.data, 0, len(self.data) - 1)
+        lastModifiedDate, lastModifiedMonth, lastModifiedYear = self.lastModifiedDate.split(' ')
+        lastModifiedDate = lastModifiedDate
+        lastModifiedYear = lastModifiedYear
+        lastModifiedMonth = str(months.index(lastModifiedMonth) + 1)
+        if lastModifiedMonth < 10:
+            lastModifiedMonth = "0"+lastModifiedMonth
+        self.lastModifiedDate = int(lastModifiedYear + lastModifiedMonth + lastModifiedDate)
+        self.data.append([self.lastModifiedDate, self.lastValue])
         for i in self.data:
             self.currentInstance.write_field(i[0], i[1])
 
@@ -379,8 +407,7 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.closeWindow = CloseWindow(self)
-            self.closeWindow.show()
+            self.close()
 
         event.accept()
 

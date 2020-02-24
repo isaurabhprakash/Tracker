@@ -4,13 +4,14 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QShortcut, QVBoxLayout, QHBoxL
 
 from ui import main_window
 
+
 class CloseWindow(QMainWindow):
     def __init__(self, mainWindow):
         QWidget.__init__(self)
 
         self.parentWindow = mainWindow
         # Set the window properties
-        self.setWindowTitle("Create a new Instance")
+        self.setWindowTitle("Do you want to close the application?")
         self.setWindowIcon(QIcon('resources/logo.png'))
         self.setGeometry(300, 300, 600, 100)
 
@@ -51,11 +52,11 @@ class CloseWindow(QMainWindow):
         self.setLayout(self.main_layout)
 
     def create_buttons(self):
-        self.save_and_exit_button = QPushButton("Save and exit")
+        self.save_and_exit_button = QPushButton("Yes")
         self.save_and_exit_button.clicked.connect(self.save_file)
         self.save_and_exit_button.setDefault(True)
 
-        self.force_exit_button = QPushButton("Don't Save")
+        self.force_exit_button = QPushButton("No")
         self.force_exit_button.clicked.connect(self.close_window)
         self.force_exit_button.setAutoDefault(True)
 
