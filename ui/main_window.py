@@ -15,7 +15,7 @@ from algorithms.quicksort import *
 months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 gFromCloseWindow = False
-
+gFromOpenWindow = False
 isChangeDone = False
 
 
@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(0, 0, 800, 600)
         self.setStyleSheet("QPushButton { font-size: 10pt;font-weight: bold}")
 
-    def initialize_variables(self, pInstanceName=None):
+    def initialize_variables(self, pInstanceName=None, pFromOpenWindow = False):
 
         if pInstanceName is None:
             # Check if this is not the first instance being created. Executed during loading.
@@ -67,9 +67,10 @@ class MainWindow(QMainWindow):
                 if os.path.exists("./logs/" + str(self.currentInstanceName)) and self.currentInstanceName != "":
                     self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
                     self.read_instance_from_disk()
-                    self.lastModifiedDate = self.data[len(self.data) - 1][0]
-                    self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
-                    self.lastValue = self.data[len(self.data) - 1][1]
+                    if len(self.data):
+                        self.lastModifiedDate = self.data[len(self.data) - 1][0]
+                        self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
+                        self.lastValue = self.data[len(self.data) - 1][1]
                 else:
                     # Someone has deleted the file manually. Create a fresh copy
                     # Someone might have opened the software and closed it without doing anything.
@@ -98,8 +99,17 @@ class MainWindow(QMainWindow):
             self.lastInstanceName = self.currentInstanceName
             self.currentInstanceName = pInstanceName
             self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-            self.lastModifiedDate = "********"
-            self.lastValue = "********"
+
+            if pFromOpenWindow:
+                self.read_instance_from_disk()
+                if len(self.data):
+                    self.lastModifiedDate = self.data[len(self.data) - 1][0]
+                    self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
+                    self.lastValue = self.data[len(self.data) - 1][1]
+            else:
+                self.lastModifiedDate = "********"
+                self.lastValue = "********"
+
             if self.lastInstanceName != "********":
                 self._trkr.write_ini_file(self.lastInstanceName)
 
@@ -118,14 +128,14 @@ class MainWindow(QMainWindow):
             l.append([self.data[i], self.data[i + 1]])
         return l
 
-    def create_new_instance(self, pInstanceName=None):
-        # Close the currently opened file
+    def create_new_instance(self, pInstanceName=None, gFromOpenWindow = False):
+                # Close the currently opened file
         if self.currentInstance is not None:
             self.currentInstance.close_file()
 
         # Set the currentInstance name and create the new file
         if pInstanceName is not None:
-            self.initialize_variables(pInstanceName)
+            self.initialize_variables(pInstanceName, gFromOpenWindow)
             self.set_label_names()
 
     def set_label_names(self):
@@ -395,8 +405,8 @@ class MainWindow(QMainWindow):
         lastModifiedDate = lastModifiedDate
         lastModifiedYear = lastModifiedYear
         lastModifiedMonth = str(months.index(lastModifiedMonth) + 1)
-        if lastModifiedMonth < 10:
-            lastModifiedMonth = "0"+lastModifiedMonth
+        if int(lastModifiedMonth) < 10:
+            lastModifiedMonth = "0"+ str(lastModifiedMonth)
         self.lastModifiedDate = int(lastModifiedYear + lastModifiedMonth + lastModifiedDate)
         self.data.append([self.lastModifiedDate, self.lastValue])
         for i in self.data:

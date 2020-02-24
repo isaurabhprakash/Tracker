@@ -10,6 +10,8 @@ class InstanceSelectionWindow(QMainWindow):
     def __init__(self, mainWindow):
         QWidget.__init__(self)
 
+        self.parentWindow = mainWindow
+
         # Set the window properties
         self.setWindowTitle("Open Tracker Log")
         self.setWindowIcon(QIcon('./resources/logo.png'))
@@ -58,6 +60,7 @@ class InstanceSelectionWindow(QMainWindow):
         # Create the list widget containing the list of instances
         self.listWidget = QListWidget()
         self.listWidget.setFocus(Qt.OtherFocusReason)
+        self.listWidget.itemActivated.connect(self.open_instance)
         self.add_items_to_open_list()
 
         # Create the bottom layout containing the Open Log button
@@ -75,8 +78,10 @@ class InstanceSelectionWindow(QMainWindow):
 
     def create_buttons(self):
         self.openLog_button = QPushButton('Open Log')
+        self.openLog_button.clicked.connect(self.open_instance)
+        # self.openLog_button.setShortcut(QKeySequence(Qt.Key_Return))
+
         self.openLog_button.setStyleSheet("background-color : maroon")
-        self.openLog_button.setShortcut(QKeySequence(Qt.Key_Return))
 
     def add_items_to_open_list(self):
         self.listWidget.clear()
@@ -86,6 +91,16 @@ class InstanceSelectionWindow(QMainWindow):
             if os.path.isfile(os.path.join('./logs/', name)) and name != "trkr":
                 self.listWidget.addItem(name)
 
+    def open_instance(self):
+        print("Item activated")
+        print("Item Name : ", end='')
+        self.parentWindow.create_new_instance(self.listWidget.currentItem().text(), True)
+        self.close()
+
     def close_window(self):
         print('Escape Pressed')
         self.close()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Enter:
+            self.listWidget.itemActivated.emit()

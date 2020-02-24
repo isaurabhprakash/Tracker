@@ -2,13 +2,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QShortcut, QLineEdit, QPushButton
 
-import __main__
-from __main__ import *
-
 
 class AddInstanceWindow(QMainWindow):
     def __init__(self, mainWindow):
         QWidget.__init__(self)
+
+        self.parentWindow = mainWindow
 
         # Set the window properties
         self.setWindowTitle("Create a new Instance")
@@ -74,7 +73,7 @@ class AddInstanceWindow(QMainWindow):
 
         # User has actually entered some name
         if text != '':
-            __main__.window.create_new_instance(text)
+            self.parentWindow.create_new_instance(text)
 
         self.close()
 
