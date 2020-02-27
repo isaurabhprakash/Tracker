@@ -23,137 +23,159 @@ class MainWindow(QMainWindow):
     def __init__(self, *args):
         QMainWindow.__init__(self, *args)
 
-        # All the in-memory value will be kept here
+        # First things first. Initialize the variables that we are going to use throughout the program.
+        self.currentInstance = None
+        self.currentInstanceName = "********"
+        self.lastInstanceName = "********"
+        self.lastModifiedDate = "********"
+        self.lastValue = "********"
+        self.currentValue = "********"
+        self.currentSliderValue = "70"
+
+        # Everything's done. Finally, set the current date form the system
+        # so that we can use it for setting the current date of the calendar widget.
+        self.set_current_date_from_system()
+
+        # All the in-memory value will be kept here.
+        # This is the sole container for all our Date - Value info.
         self.data = []
 
-        # Set the window properties
         self.set_window_properties()
 
-        # Initialize Variables
+        # Needs to be done prior to widget creation as the app widgets
+        # use values set in this function.
         self.initialize_variables()
 
-        # Set the central widget. Everything will be on top of this.
-        self.cw = QWidget(self)
-        self.setCentralWidget(self.cw)
+        self.create_widgets()
 
-        # Create the layouts and the widgets contained in it
         self.create_layout()
 
-    def closeEvent(self, event):
-        # Opens the close window. Event is passed so that closing the app can be done from the close window.
-        if gFromCloseWindow is False:
-            if self.currentInstanceName != "********" and isChangeDone is True:
-                self.closeWindow = CloseWindow(self)
-                self.closeWindow.show()
-                event.ignore()
-        else:
-            super(MainWindow, self).closeEvent(event)
-
+    # ----------------------------------------------------------------#
+    # Sets the main window properties : Title, Icon, Geometry and     #
+    # Stylesheet                                                      #
+    # ----------------------------------------------------------------#
     def set_window_properties(self):
         self.setWindowTitle('Tracker')
         self.setWindowIcon(QIcon('./resources/logo.png'))
         self.setGeometry(0, 0, 800, 600)
         self.setStyleSheet("QPushButton { font-size: 10pt;font-weight: bold}")
 
-    def initialize_variables(self, pInstanceName=None, pFromOpenWindow = False):
+    # ----------------------------------------------------------------#
+    # Creates all the widgets present in the Main Window. Doesn't add #
+    # them to the screen.                                             #
+    # ----------------------------------------------------------------#
+    def create_widgets(self):
 
-        if pInstanceName is None:
-            # Check if this is not the first instance being created. Executed during loading.
-            if len([name for name in os.listdir('./logs/') if os.path.isfile(os.path.join('./logs/', name))]) is not 0:
-                # There are existing logs. Open the trkr file to know the last instance the user was working on
-                self._trkr = DataFile("./logs/trkr")
-                self.lastInstanceName = self._trkr.read_ini_file().decode('UTF-8')
-                self.currentInstanceName = self.lastInstanceName
-                if os.path.exists("./logs/" + str(self.currentInstanceName)) and self.currentInstanceName != "":
-                    self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-                    self.read_instance_from_disk()
-                    if len(self.data):
-                        self.lastModifiedDate = self.data[len(self.data) - 1][0]
-                        self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
-                        self.lastValue = self.data[len(self.data) - 1][1]
-                else:
-                    # Someone has deleted the file manually. Create a fresh copy
-                    # Someone might have opened the software and closed it without doing anything.
-                    # In this case the trkr file gets generated but contains nothing. So currentInstanceName
-                    # would be ""
-                    if self.currentInstanceName != "":
-                        self.initialize_variables(self.currentInstanceName)
-                    else:
-                        self.currentInstance = None
-                        self.currentInstanceName = "********"
-                        self.lastInstanceName = "********"
-                        self.lastModifiedDate = "********"
-                        self.lastValue = "********"
-                        self.currentSliderValue = "********"
-            else:
-                # First time
-                self._trkr = DataFile("./logs/trkr")
-                self.currentInstance = None
-                self.currentInstanceName = "********"
-                self.lastInstanceName = "********"
-                self.lastModifiedDate = "********"
-                self.lastValue = "********"
-                self.currentSliderValue = "********"
-                # First time ever. Create the ini file
-        else:  # User is creating a new instance
-            self.lastInstanceName = self.currentInstanceName
-            self.currentInstanceName = pInstanceName
-            self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
+        # Set the central widget. Everything will be created on top of this
+        self.cw = QWidget(self)
+        self.setCentralWidget(self.cw)
 
-            if pFromOpenWindow:
-                self.read_instance_from_disk()
-                if len(self.data):
-                    self.lastModifiedDate = self.data[len(self.data) - 1][0]
-                    self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
-                    self.lastValue = self.data[len(self.data) - 1][1]
-            else:
-                self.lastModifiedDate = "********"
-                self.lastValue = "********"
+        # Create the widgets used in the app
+        self.calendar = self.get_calendar_widget()
+        self.slider = self.get_slider()
+        self.doubleSpinBox = self.get_double_spin_box()
 
-            if self.lastInstanceName != "********":
-                self._trkr.write_ini_file(self.lastInstanceName)
+        # Create the buttons used in the app
+        self.create_buttons()
 
-        self.current_year, self.current_month, self.current_date = map(int, list(str(datetime.now().date()).split('-')))
-        self.currentDate = str(self.current_date) + " " + str(months[self.current_month - 1]) + " " + str(
-            self.current_year)
-        self.currentSliderValue = 70  # TODO: If currentDate has a value, show that
+    # ----------------------------------------------------------------#
+    # Creates the button used in the app : Add, Open, Delete,         #
+    # Show Log, Plot and Save                                         #
+    # ----------------------------------------------------------------s#
+    def create_buttons(self):
+        self.add_button = QPushButton("Add +", self.cw)
+        self.add_button.setFixedSize(300, 60)
+        self.add_button.clicked.connect(self.add_instance)
+        self.add_button.setShortcut(QKeySequence(Qt.Key_A))
 
-    def read_instance_from_disk(self):
-        self.data = self.currentInstance.read_file()
-        self.data = self.create_in_memory_data()
+        self.open_button = QPushButton("Open", self.cw)
+        self.open_button.setFixedSize(300, 60)
+        self.open_button.clicked.connect(self.open_instance)
+        self.open_button.setShortcut(QKeySequence(Qt.Key_O))
 
-    def create_in_memory_data(self):
-        l = []
-        for i in range(0, len(self.data), 2):
-            l.append([self.data[i], self.data[i + 1]])
-        return l
+        self.delete_button = QPushButton("Delete", self.cw)
+        self.delete_button.setFixedSize(300, 60)
+        self.delete_button.clicked.connect(self.delete_data)
+        self.delete_button.setShortcut(QKeySequence(Qt.Key_I))
 
-    def create_new_instance(self, pInstanceName=None, gFromOpenWindow = False):
-                # Close the currently opened file
-        if self.currentInstance is not None:
-            self.currentInstance.close_file()
+        self.showlog_button = QPushButton("Show Log", self.cw)
+        self.showlog_button.setFixedSize(300, 60)
+        self.showlog_button.clicked.connect(self.show_log)
+        self.showlog_button.setShortcut(QKeySequence(Qt.Key_L))
 
-        # Set the currentInstance name and create the new file
-        if pInstanceName is not None:
-            self.initialize_variables(pInstanceName, gFromOpenWindow)
-            self.set_label_names()
+        self.plot_button = QPushButton("Plot", self.cw)
+        self.plot_button.setFixedSize(300, 60)
+        self.plot_button.clicked.connect(self.plot_graph)
+        self.plot_button.setShortcut(QKeySequence(Qt.Key_P))
 
-    def set_label_names(self):
-        self.label_top.setText("Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
-            self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
-        self.label_down.setText("\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentSliderValue))
+        self.save_button = QPushButton("Save", self.cw)
+        self.save_button.setFixedSize(300, 60)
+        self.save_button.clicked.connect(self.save_data)
+        self.save_button.setShortcut(QKeySequence(Qt.Key_S))
 
+    # -------------------------------------------- #
+    # Creates a QCalendarWidget and returns it     #
+    # ---------------------------------------------#
+    def get_calendar_widget(self):
+        calendar = QCalendarWidget(self.cw)
+        calendar.setGridVisible(True)
+        calendar.setSelectedDate(QDate(int(self.current_year), int(self.current_month), int(self.current_date)))
+        calendar.clicked.connect(self.set_current_date)
+        calendar.selectionChanged.connect(self.change_date)
+        return calendar
+
+    # -------------------------------------------- #
+    # Creates a QSlider and returns it             #
+    # ---------------------------------------------#
+    def get_slider(self):
+        slider = QSlider(Qt.Horizontal, self.cw)
+        slider.setMinimum(0)
+        slider.setMaximum(600)
+        slider.setValue(70)
+        slider.setTickPosition(2)
+        slider.setSingleStep(1)
+        slider.valueChanged.connect(lambda x: self.set_current_slider_value(x))
+        return slider
+
+    # -------------------------------------------- #
+    # Creates a QDoubleSpinBox and returns it      #
+    # ---------------------------------------------#
+    def get_double_spin_box(self):
+        doubleSpinBox = QDoubleSpinBox(self.cw)
+        doubleSpinBox.setMaximum(120.0)
+
+        # When value changes in Double Spin Box, it triggers the change of
+        # value in the slider. When value changes in the slider, it triggers
+        # a change in the value of the Double Spin Box. As we don't want to
+        # fall into an infinite loop, thus we need to block signals here.
+        doubleSpinBox.blockSignals(True)
+        doubleSpinBox.setValue(int(self.currentSliderValue))
+        doubleSpinBox.blockSignals(False)
+
+        # When value changes in QSpinBox, same should be reflected in QSlider.
+        doubleSpinBox.valueChanged.connect(lambda x: self.set_double_spin_box_value(x))
+
+        return doubleSpinBox
+
+    # ----------------------------------------------------------------#
+    # This is our core function for creating the UI. All the created  #
+    # widgets are placed on proper positions in the app in this        #
+    # function only.                                                  #
+    # ----------------------------------------------------------------#
     def create_layout(self):
         # _______________________________________________________________
         # |                             |                               |
         # |                             | Instance : Saurabh            |
-        # |                             | Last Modified on: Feb-2-2020  |
+        # |                             | Last Modified on: 2 Feb 2020  |
         # |                             | Last Value : 110              |
         # |                             |                               |
+        # |                             | Date : Feb - 5 Feb 2020       |
+        # |                             | Value: 70                     |
         # |                             |_______________________________|
         # |       Calendar              |                               |
         # |                             |   Add +                       |
-        # |                             |   Import                      |
+        # |                             |   Open                        |
+        # |                             |   Delete                      |
         # |                             |   Show Log                    |
         # |                             |   Plot                        |
         # |_____________________________|   Save                        |
@@ -172,12 +194,12 @@ class MainWindow(QMainWindow):
 
         # LeftUpperLayout(Part of LeftLayout): Layout containing Calendar
         self.left_upper_layout = QGridLayout(self.cw)
-        self.left_upper_layout.addWidget(self.get_calendar_widget())
+        self.left_upper_layout.addWidget(self.calendar)
 
         # LeftLowerLayout(Part of LeftLayout) : Layout containing Slider and LineEdit
         self.left_lower_layout = QHBoxLayout(self.cw)
-        self.left_lower_layout.addWidget(self.get_slider())
-        self.left_lower_layout.addWidget(self.get_double_spin_box())
+        self.left_lower_layout.addWidget(self.slider)
+        self.left_lower_layout.addWidget(self.doubleSpinBox)
 
         # Adding the LeftUpper and LeftLower Layouts to the LeftLayout
         self.left_layout.addLayout(self.left_upper_layout)
@@ -197,10 +219,9 @@ class MainWindow(QMainWindow):
         self.right_lower_layout = QVBoxLayout(self.cw)
         self.right_lower_layout.addStretch(3)
         self.right_lower_layout.setAlignment(Qt.AlignTop)
-        self.create_buttons()
         self.right_lower_layout.addWidget(self.add_button)
         self.right_lower_layout.addWidget(self.open_button)
-        self.right_lower_layout.addWidget(self.import_button)
+        self.right_lower_layout.addWidget(self.delete_button)
         self.right_lower_layout.addWidget(self.showlog_button)
         self.right_lower_layout.addWidget(self.plot_button)
         self.right_lower_layout.addWidget(self.save_button)
@@ -216,6 +237,144 @@ class MainWindow(QMainWindow):
         # MainLayout is what we are using
         self.cw.setLayout(self.main_layout)
 
+    def set_current_date_from_system(self):
+        self.current_year, self.current_month, self.current_date = list(str(datetime.now().date()).split('-'))
+
+        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
+            self.current_year)
+
+    # ----------------------------------------------------------------#
+    # Initialize the member variables. This method would be called    #
+    # during startup and every time a new instance is created or an   #
+    # already existing instance is opened.                            #
+    # --------------------------------------------------------------- #
+
+    def initialize_variables(self, pInstanceName=None, pFromOpenWindow=False):
+        if pInstanceName is None:  # This is true only during the startup
+
+            # Check if there are instances already present on the disk. This would mean that
+            # we have to open the last instance the user was working upon.
+            if len([name for name in os.listdir('./logs/') if os.path.isfile(os.path.join('./logs/', name))]) is not 0:
+
+                # Alright. So there are existing instances on the disk. Or atleast the trkr
+                # file is there.Open the trkr file to know thelast instance that the user was working upon.
+                self._trkr = DataFile("./logs/trkr")
+
+                # Get the name of the last instance from the trkr file.
+                self.lastInstanceName = self._trkr.read_ini_file().decode('UTF-8')
+
+                # As we write the Last Instance Name to the trkr file only when the user
+                # saves some data, this will happen if and only if the user has never saved
+                # any data. It's kind of starting fresh.
+                if self.lastInstanceName == "":
+                    # We have nothing to do here as we already have the trkr file.
+                    # So just return.
+                    return
+                else:
+                    # So now we have a Last Instance Name. Check if the instance is actually present
+                    # on the disk.
+                    if os.path.exists("./logs/" + str(self.currentInstanceName)):
+                        # Alright, the instance we were looking for is on the disk.
+
+                        # Since this is the instance we are going to open, set it as the Current Instance Name
+                        self.currentInstanceName = self.lastInstanceName
+
+                        # Open the instance
+                        self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
+
+                        # Read the data from it and save it to our sole container self.data[]
+                        self.read_instance_from_disk()
+
+                        # The user has the ability to delete all the data.
+                        # She could have chosen to delete the file altogether. This would have made our life easier.
+                        # But, To ERR IS HUMAN !!
+                        if len(self.data):
+                            self.lastModifiedDate = str(self.data[len(self.data) - 1][0])
+                            self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
+                            self.lastValue = str(self.data[len(self.data) - 1][1])
+                    else:
+                        # Oops! The user is a cruel person. She has deleted the instance manually from the disk.
+                        # Also, she is a bit partial towards the trkr file, so she has not deleted or modified it.
+                        # Consequently, the instance is there in the trkr file, but it doesn't exist on the disk. :-(
+                        # So like a responsible developer, we should show a proper message to the user to let her
+                        # know what sin she has done.
+                        self.msg = QMessageBox()
+                        self.msg.setWindowIcon(QIcon('resources/logo.png'))
+                        self.msg.setWindowTitle("Oops!")
+                        self.msg.setText("Oops!! Someone has deleted " + self.lastInstanceName + " from the "
+                                                                                                 "disk.\nThe only"
+                                                                                                 " rescue is to "
+                                                                                                 "start fresh...")
+                        self.msg.setGeometry(300, 300, 600, 100)
+                        self.msg.show()
+
+                        # Make sure the next time we don't have to encounter the
+                        # same situation.
+                        self._trkr.write_ini_file("")
+            else:
+                # So there are no instances and not even the trkr file. So this is
+                # kind of the first time the user is opening the app. All we have to do
+                # here is to create the trkr file and let the user explore the app!
+                self._trkr = DataFile("./logs/trkr")
+
+        else:  # Alright. So the user is creating a new instance
+
+            # If the user turns out to be lazy and doesn't save anything for the newly created instance
+            # the current instance will serve as the last instance she was working upon. So save this value as we
+            # might need it.
+            self.lastInstanceName = self.currentInstanceName
+            self.currentInstanceName = pInstanceName
+            self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
+
+            # The user trying to open an already existing instance from the Open Window
+            if pFromOpenWindow:
+                self.read_instance_from_disk()
+
+                # Again, the user might have deleted all the data.
+                if len(self.data):
+                    self.lastModifiedDate = self.data[len(self.data) - 1][0]
+                    self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
+                    self.lastValue = str(self.data[len(self.data) - 1][1])
+
+            # We write to the ini file only if the last instance name makes some sense.
+            if self.lastInstanceName != "********":
+                self._trkr.write_ini_file(self.lastInstanceName)
+
+    def closeEvent(self, event):
+        # Opens the close window. Event is passed so that closing the app can be done from the close window.
+        if gFromCloseWindow is False:
+            if self.currentInstanceName != "********" and isChangeDone is True:
+                self.closeWindow = CloseWindow(self)
+                self.closeWindow.show()
+                event.ignore()
+        else:
+            super(MainWindow, self).closeEvent(event)
+
+    def read_instance_from_disk(self):
+        self.data = self.currentInstance.read_file()
+        self.data = self.create_in_memory_data()
+
+    def create_in_memory_data(self):
+        l = []
+        for i in range(0, len(self.data), 2):
+            l.append([self.data[i], self.data[i + 1]])
+        return l
+
+    def create_new_instance(self, pInstanceName=None, gFromOpenWindow=False):
+        # Close the currently opened file
+        if self.currentInstance is not None:
+            self.currentInstance.close_file()
+
+        # Set the currentInstance name and create the new file
+        if pInstanceName is not None:
+            self.initialize_variables(pInstanceName, gFromOpenWindow)
+            self.set_label_names()
+
+    def set_label_names(self):
+        self.label_top.setText("Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
+            self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
+        self.label_down.setText("\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentValue))
+
     def create_labels(self):
         self.label_top = QLabel(self.cw)
         self.label_down = QLabel(self.cw)
@@ -227,35 +386,16 @@ class MainWindow(QMainWindow):
         print(self.currentDate)
         self.set_label_names()
 
-    def get_calendar_widget(self):
-
-        self.calendar = QCalendarWidget(self.cw)
-        self.calendar.setGridVisible(True)
-        self.calendar.setSelectedDate(QDate(self.current_year, self.current_month, self.current_date))
-        self.calendar.clicked.connect(self.set_current_date)
-        self.set_current_date()
-        self.calendar.selectionChanged.connect(self.change_date)
-        return self.calendar
-
-    def get_slider(self):
-        self.slider = QSlider(Qt.Horizontal, self.cw)
-        self.slider.setMinimum(0)
-        self.slider.setMaximum(600)
-        self.slider.setValue(70)
-        self.slider.setTickPosition(2)
-        self.slider.setSingleStep(1)
-        # self.slider.setPageStep(5)
-
-        self.slider.valueChanged.connect(lambda x: self.set_current_slider_value(x))
-
-        return self.slider
-
     def set_current_slider_value(self, pCurrentValue, fromDoubleSpinBox=False):
         self.currentSliderValue = int(60 + (pCurrentValue / 10))
 
-        # Block signals so that vlaueChanged signal is not trigerred for QDoubleSpingBox.
-        # Else there will be a cyclic situaton
+        # Block signals so that vlaueChanged signal is not triggered for QDoubleSpinBox.
+        # Else there will be a cyclic situation
         if not fromDoubleSpinBox:
+            # When value changes in Slider, it triggers the change of
+            # value in the Double Spin Box. When value changes in the Double Spin Box,
+            # it triggers a change in the value of the Slider. As we don't want to
+            # fall into an infinite loop, thus we need to block signals here.
             self.doubleSpinBox.blockSignals(True)
             self.doubleSpinBox.setValue(self.currentSliderValue)
             self.doubleSpinBox.blockSignals(False)
@@ -268,51 +408,6 @@ class MainWindow(QMainWindow):
     def set_double_spin_box_value(self, pCurrentValue):
         pCurrentValue = (pCurrentValue - 60) * 10
         self.set_current_slider_value(pCurrentValue, True)
-
-    def get_double_spin_box(self):
-        self.doubleSpinBox = QDoubleSpinBox(self.cw)
-        self.doubleSpinBox.setMaximum(120.0)
-
-        # We don't want to trigger valueChanged signal here.
-        # When value changes in QSpinBox, same should be reflected in QSlider
-        self.doubleSpinBox.blockSignals(True)
-        self.doubleSpinBox.setValue(self.currentSliderValue)
-        self.doubleSpinBox.blockSignals(False)
-
-        self.doubleSpinBox.valueChanged.connect(lambda x: self.set_double_spin_box_value(x))
-
-        return self.doubleSpinBox
-
-    def create_buttons(self):
-        self.add_button = QPushButton("Add +", self.cw)
-        self.add_button.setFixedSize(300, 60)
-        self.add_button.clicked.connect(self.add_instance)
-        self.add_button.setShortcut(QKeySequence(Qt.Key_A))
-
-        self.open_button = QPushButton("Open", self.cw)
-        self.open_button.setFixedSize(300, 60)
-        self.open_button.clicked.connect(self.open_instance)
-        self.open_button.setShortcut(QKeySequence(Qt.Key_O))
-
-        self.import_button = QPushButton("Import", self.cw)
-        self.import_button.setFixedSize(300, 60)
-        self.import_button.clicked.connect(self.import_data)
-        self.import_button.setShortcut(QKeySequence(Qt.Key_I))
-
-        self.showlog_button = QPushButton("Show Log", self.cw)
-        self.showlog_button.setFixedSize(300, 60)
-        self.showlog_button.clicked.connect(self.show_log)
-        self.showlog_button.setShortcut(QKeySequence(Qt.Key_L))
-
-        self.plot_button = QPushButton("Plot", self.cw)
-        self.plot_button.setFixedSize(300, 60)
-        self.plot_button.clicked.connect(self.plot_graph)
-        self.plot_button.setShortcut(QKeySequence(Qt.Key_P))
-
-        self.save_button = QPushButton("Save", self.cw)
-        self.save_button.setFixedSize(300, 60)
-        self.save_button.clicked.connect(self.save_data)
-        self.save_button.setShortcut(QKeySequence(Qt.Key_S))
 
     def set_current_date(self):
         self.current_date, self.current_month, self.current_year = self.calendar.selectedDate().toString(
@@ -338,7 +433,7 @@ class MainWindow(QMainWindow):
         self.instanceSelectionWindow = InstanceSelectionWindow(self)
         self.instanceSelectionWindow.show()
 
-    def import_data(self):
+    def delete_data(self):
         print("Importing data")
 
     def show_log(self):
@@ -394,7 +489,7 @@ class MainWindow(QMainWindow):
         currentDate = pDate % 100
         pDate = pDate // 100
         currentMonth = months[(pDate % 100) - 1]
-        pDate = pDate //100
+        pDate = pDate // 100
         currentYear = pDate
         return str(currentDate) + " " + currentMonth + " " + str(currentYear)
 
@@ -406,7 +501,7 @@ class MainWindow(QMainWindow):
         lastModifiedYear = lastModifiedYear
         lastModifiedMonth = str(months.index(lastModifiedMonth) + 1)
         if int(lastModifiedMonth) < 10:
-            lastModifiedMonth = "0"+ str(lastModifiedMonth)
+            lastModifiedMonth = "0" + str(lastModifiedMonth)
         self.lastModifiedDate = int(lastModifiedYear + lastModifiedMonth + lastModifiedDate)
         self.data.append([self.lastModifiedDate, self.lastValue])
         for i in self.data:
