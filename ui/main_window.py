@@ -120,8 +120,7 @@ class MainWindow(QMainWindow):
         calendar = QCalendarWidget(self.cw)
         calendar.setGridVisible(True)
         calendar.setSelectedDate(QDate(int(self.current_year), int(self.current_month), int(self.current_date)))
-        calendar.clicked.connect(self.set_current_date)
-        calendar.selectionChanged.connect(self.change_date)
+        calendar.selectionChanged.connect(self.change_date_and_value)
         return calendar
 
     # -------------------------------------------- #
@@ -212,8 +211,8 @@ class MainWindow(QMainWindow):
         self.right_upper_layout = QVBoxLayout(self.cw)
         self.right_upper_layout.addStretch(1)
         self.right_upper_layout.setAlignment(Qt.AlignTop)
-        self.right_upper_layout.addWidget(self.label_top)
-        self.right_upper_layout.addWidget(self.label_down)
+        self.right_upper_layout.addWidget(self.right_upper_top_label)
+        self.right_upper_layout.addWidget(self.right_upper_bottom_label)
 
         # RightLowerLayout : Layout containing buttons and settings
         self.right_lower_layout = QVBoxLayout(self.cw)
@@ -237,14 +236,8 @@ class MainWindow(QMainWindow):
         # MainLayout is what we are using
         self.cw.setLayout(self.main_layout)
 
-    def set_current_date_from_system(self):
-        self.current_year, self.current_month, self.current_date = list(str(datetime.now().date()).split('-'))
-
-        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
-            self.current_year)
-
     # ----------------------------------------------------------------#
-    # Initialize the member variables. This method would be called    #
+    # Initializes the member variables. This method would be called    #
     # during startup and every time a new instance is created or an   #
     # already existing instance is opened.                            #
     # --------------------------------------------------------------- #
@@ -256,8 +249,8 @@ class MainWindow(QMainWindow):
             # we have to open the last instance the user was working upon.
             if len([name for name in os.listdir('./logs/') if os.path.isfile(os.path.join('./logs/', name))]) is not 0:
 
-                # Alright. So there are existing instances on the disk. Or atleast the trkr
-                # file is there.Open the trkr file to know thelast instance that the user was working upon.
+                # Alright. So there are existing instances on the disk. Or at least the trkr
+                # file is there.Open the trkr file to know the last instance that the user was working upon.
                 self._trkr = DataFile("./logs/trkr")
 
                 # Get the name of the last instance from the trkr file.
@@ -273,7 +266,7 @@ class MainWindow(QMainWindow):
                 else:
                     # So now we have a Last Instance Name. Check if the instance is actually present
                     # on the disk.
-                    if os.path.exists("./logs/" + str(self.currentInstanceName)):
+                    if os.path.exists("./logs/" + str(self.lastInstanceName)):
                         # Alright, the instance we were looking for is on the disk.
 
                         # Since this is the instance we are going to open, set it as the Current Instance Name
@@ -340,6 +333,135 @@ class MainWindow(QMainWindow):
             if self.lastInstanceName != "********":
                 self._trkr.write_ini_file(self.lastInstanceName)
 
+    # ----------------------------------------------------------------#
+    # This function is called when the user clicks the add button.    #
+    # Creates a new window to take the name of the instance the user  #
+    # wants to create. If a name is given, it creates the instance    #
+    # physically.                                                     #
+    # ----------------------------------------------------------------#
+    def add_instance(self):
+        print("Add Button Clicked")
+
+        # Save the current instance name. This will be used to know if the user has actually created
+        # a new instance from the AddInstanceWindow
+        self.prevInstanceName = self.currentInstanceName
+        self.addWindow = AddInstanceWindow(self)
+        self.addWindow.show()
+
+        # User has actually given some name for the new instance
+        if self.currentInstanceName != self.prevInstanceName:
+            self.create_new_instance(self.currentInstanceName)
+
+    # TODO :Should handle the case when an instance with the same name is already present.
+    # ----------------------------------------------------------------#
+    # Actually creates a physical instance on the disk. An instance   #
+    # is created only if it is not already present on the disk.       #
+    # Otherwise, a window is shown to the user to take appropriate    #
+    # action.                                                         #
+    # ----------------------------------------------------------------#
+    def create_new_instance(self, pInstanceName=None, gFromOpenWindow=False):
+        # Close the currently opened file
+        if self.currentInstance is not None:
+            self.currentInstance.close_file()
+
+        # Set the currentInstance name and create the new file
+        if pInstanceName is not None:  # TODO : and pInstance name no in self.allInstances[]
+            self.initialize_variables(pInstanceName, gFromOpenWindow)
+            self.set_label_names()
+        else:
+            # TODO : An instance with the same name is already present. Change the name or don't create.
+            # Need to show a window here.
+            pass
+
+    # ----------------------------------------------------------------#
+    # Shows the Instance Selection window                             #
+    # ----------------------------------------------------------------#
+    def open_instance(self):
+        print("Opening instance")
+        self.instanceSelectionWindow = InstanceSelectionWindow(self)
+        self.instanceSelectionWindow.show()
+
+    def delete_data(self):
+        print("Importing data")
+
+    def show_log(self):
+        print("Showing Log")
+
+    def plot_graph(self):
+        print("Plotting Graph")
+
+    # ----------------------------------------------------------------#
+    # This function is called when the user clicks the save button.   #
+    # Clicking on save button saves the data in-memory only. The data #
+    # is actually written to the disk only when the application is    #
+    # closed                                                          #
+    # ----------------------------------------------------------------#
+    def save_data(self):
+        # So the user is trying to save without creating an instance.
+        # This can happen only when the user hasn't opened any instance.
+        if self.currentInstance is None:
+            # Show a proper message to the user and return
+            self.noInstanceWindow = NoInstanceWindow(self)
+            self.noInstanceWindow.show()
+            return
+
+        # Alright, so the user has done at least one change.
+        # A change implies clicking the Save Button or deleting some value.
+        # We use isChangeDone variable to decide whether to show a confirmation window
+        # or not when the user tried closing the app. If no change has been done, the
+        # confirmation window is not shown.
+        # TODO: Set the variable in delete_data function too.
+        global isChangeDone
+        isChangeDone = True
+
+        # Write the current instance name to the ini file so that
+        # the next time the app opens, it opens this instance only.
+        if self.currentInstance is not None:
+            self._trkr.write_ini_file(self.currentInstanceName)
+
+        # Get the current date and set it to last modified date
+        # Last Modified Date is an integer representing the date.
+        # Last Modified Date and Last Modified Value are written to the disk
+        # so that the next time the application opens this instance, we can show these on the window.
+        self.lastModifiedDate = self.convert_date_to_int(self.current_date)
+        self.lastValue = self.currentSliderValue
+
+        # Obviously, as the user has clicked save, so she wants to see the same value
+        # on the window.
+        self.currentValue = self.currentSliderValue
+
+        # Write everything in memory
+        self.write_to_inmemory_list(self.lastModifiedDate, self.currentSliderValue)
+
+        print(self.data)
+
+        # We have written the date to the in-memory data. Now, change
+        # it to a format in which it can be shown on the Main Window for the
+        # last modified date label
+        self.lastModifiedDate = self.currentDate
+
+        # We have the updated values. Show it on the main window.
+        self.set_label_names()
+
+    # ----------------------------------------------------------------#
+    # Writes the date - value pair to the sole in memory-container    #
+    # ----------------------------------------------------------------#
+    def write_to_inmemory_list(self, pDate, pValue):
+        for i in self.data:
+            # The user is modifying an already existing entry.
+            if i[0] == pDate:
+                i[1] = pValue
+                return
+
+        # The user is doing an entry for this date for the first time.
+        self.data.append([pDate, pValue])
+
+    def set_current_date_from_system(self):
+        self.current_year, self.current_month, self.current_date = list(str(datetime.now().date()).split('-'))
+
+        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
+            self.current_year)
+
     def closeEvent(self, event):
         # Opens the close window. Event is passed so that closing the app can be done from the close window.
         if gFromCloseWindow is False:
@@ -360,31 +482,44 @@ class MainWindow(QMainWindow):
             l.append([self.data[i], self.data[i + 1]])
         return l
 
-    def create_new_instance(self, pInstanceName=None, gFromOpenWindow=False):
-        # Close the currently opened file
-        if self.currentInstance is not None:
-            self.currentInstance.close_file()
-
-        # Set the currentInstance name and create the new file
-        if pInstanceName is not None:
-            self.initialize_variables(pInstanceName, gFromOpenWindow)
-            self.set_label_names()
-
     def set_label_names(self):
-        self.label_top.setText("Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
-            self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
-        self.label_down.setText("\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentValue))
+        self.right_upper_top_label.setText(
+            "Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
+                self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
+        self.right_upper_bottom_label.setText(
+            "\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentValue))
 
     def create_labels(self):
-        self.label_top = QLabel(self.cw)
-        self.label_down = QLabel(self.cw)
+        self.right_upper_top_label = QLabel(self.cw)
+        self.right_upper_bottom_label = QLabel(self.cw)
+        self.right_upper_bottom_label.setFont(QFont("Times", 12, QFont.Black))
         self.set_label_names()
-        self.label_down.setFont(QFont("Times", 12, QFont.Black))
 
-    def change_date(self):
+    def change_date_and_value(self):
         self.set_current_date()
-        print(self.currentDate)
+        self.set_current_value(self.convert_date_to_int(self.currentDate))
         self.set_label_names()
+
+    def set_current_date(self):
+        self.current_date, self.current_month, self.current_year = self.calendar.selectedDate().toString(
+            'dd-MM-yyyy').split('-')
+
+        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
+            self.current_year)
+
+    def set_current_value(self, pDate):
+        for i in self.data:
+            if int(i[0]) == int(pDate):
+                self.currentValue = i[1]
+                return
+
+        self.currentValue = "********"
+
+    def convert_date_to_int(self, pDate):
+        if int(self.current_date) < 10:
+            self.current_date = "0" + self.current_date
+
+        return int(self.current_year + self.current_month + self.current_date)
 
     def set_current_slider_value(self, pCurrentValue, fromDoubleSpinBox=False):
         self.currentSliderValue = int(60 + (pCurrentValue / 10))
@@ -409,83 +544,8 @@ class MainWindow(QMainWindow):
         pCurrentValue = (pCurrentValue - 60) * 10
         self.set_current_slider_value(pCurrentValue, True)
 
-    def set_current_date(self):
-        self.current_date, self.current_month, self.current_year = self.calendar.selectedDate().toString(
-            'dd-MM-yyyy').split('-')
-        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
-            self.current_year)
-
-    def add_instance(self):
-        print("Add Button Clicked")
-
-        # Save the current instance name. This will be used to know if the user has actually created
-        # a new instance from the AddInstanceWindow
-        self.prevInstanceName = self.currentInstanceName
-        self.addWindow = AddInstanceWindow(self)
-        self.addWindow.show()
-
-        # User has actually created a new instance
-        if self.currentInstanceName != self.prevInstanceName:
-            self.create_new_instance(self.currentInstanceName)
-
-    def open_instance(self):
-        print("Opening instance")
-        self.instanceSelectionWindow = InstanceSelectionWindow(self)
-        self.instanceSelectionWindow.show()
-
-    def delete_data(self):
-        print("Importing data")
-
-    def show_log(self):
-        print("Showing Log")
-
-    def plot_graph(self):
-        print("Plotting Graph")
-
-    def save_data(self):
-        if self.currentInstanceName == "********":
-            self.noInstanceWindow = NoInstanceWindow(self)
-            self.noInstanceWindow.show()
-            return
-        global isChangeDone
-        isChangeDone = True
-        # Write the current instance name to the ini file so that
-        # the next time the software open, it opens this instance only.
-        if self.currentInstanceName != "********":
-            self._trkr.write_ini_file(self.currentInstanceName)
-
-        # Get the current date and set it to last modified date
-        # Last Modified Date is an integer representing the date
-        # This is what will be written to the disk.
-        self.lastModifiedDate = int(self.calendar.selectedDate().toString("yyyyMMdd"))
-
-        # Current Date is what is shown on the software as a Label
-        self.set_current_date()
-
-        self.lastValue = self.currentSliderValue
-
-        # Write everything in memory
-        self.write_to_inmemory_list(self.lastModifiedDate, self.currentSliderValue)
-
-        print(self.data)
-
-        # We have written the date to the in-memory data. Now, change
-        # it to a format in which it can be shown on the Main Window for the
-        # last modified date label
-        self.lastModifiedDate = self.currentDate
-
-        # We have the updated values. Show it on the main window.
-        self.set_label_names()
-
-    def write_to_inmemory_list(self, pDate, pValue):
-        for i in self.data:
-            if i[0] == pDate:
-                i[1] = pValue
-                return
-
-        self.data.append([pDate, pValue])
-
     def convert_int_to_date(self, pDate):
+        pDate = int(pDate)
         currentDate = pDate % 100
         pDate = pDate // 100
         currentMonth = months[(pDate % 100) - 1]
