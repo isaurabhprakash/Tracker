@@ -12,8 +12,6 @@ from ui.no_instance_window import *
 from database.datafile import *
 from algorithms.quicksort import *
 
-months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
 gFromCloseWindow = False
 gFromOpenWindow = False
 isChangeDone = False
@@ -31,6 +29,17 @@ class MainWindow(QMainWindow):
         self.lastValue = "********"
         self.currentValue = "********"
         self.currentSliderValue = "70"
+
+        # This list is used for displaying the date on the App.
+        self.months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        # Contains the list of all the instances the user has created.
+        # This list is used when the user tries to create a duplicate instance.
+        # Also, it is used the OpenWindow for showing the list of instances.
+        self.allInstances = []
+
+        # Add items to allInstances
+        self.add_instances_to_list()
 
         # Everything's done. Finally, set the current date form the system
         # so that we can use it for setting the current date of the calendar widget.
@@ -77,6 +86,11 @@ class MainWindow(QMainWindow):
 
         # Create the buttons used in the app
         self.create_buttons()
+
+        # A generic message box window to show different messages to the user
+        self.msg = QMessageBox()
+        self.msg.setWindowIcon(QIcon('resources/logo.png'))
+        self.msg.setGeometry(300, 300, 600, 100)
 
     # ----------------------------------------------------------------#
     # Creates the button used in the app : Add, Open, Delete,         #
@@ -291,14 +305,11 @@ class MainWindow(QMainWindow):
                         # Consequently, the instance is there in the trkr file, but it doesn't exist on the disk. :-(
                         # So like a responsible developer, we should show a proper message to the user to let her
                         # know what sin she has done.
-                        self.msg = QMessageBox()
-                        self.msg.setWindowIcon(QIcon('resources/logo.png'))
                         self.msg.setWindowTitle("Oops!")
                         self.msg.setText("Oops!! Someone has deleted " + self.lastInstanceName + " from the "
                                                                                                  "disk.\nThe only"
                                                                                                  " rescue is to "
                                                                                                  "start fresh...")
-                        self.msg.setGeometry(300, 300, 600, 100)
                         self.msg.show()
 
                         # Make sure the next time we don't have to encounter the
@@ -318,7 +329,8 @@ class MainWindow(QMainWindow):
             self.lastInstanceName = self.currentInstanceName
             self.currentInstanceName = pInstanceName
             self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-
+            self.allInstances.append(self.currentInstanceName)
+            self.allInstances.sort()
             # The user trying to open an already existing instance from the Open Window
             if pFromOpenWindow:
                 self.read_instance_from_disk()
@@ -352,26 +364,36 @@ class MainWindow(QMainWindow):
         if self.currentInstanceName != self.prevInstanceName:
             self.create_new_instance(self.currentInstanceName)
 
-    # TODO :Should handle the case when an instance with the same name is already present.
     # ----------------------------------------------------------------#
     # Actually creates a physical instance on the disk. An instance   #
     # is created only if it is not already present on the disk.       #
     # Otherwise, a window is shown to the user to take appropriate    #
     # action.                                                         #
     # ----------------------------------------------------------------#
-    def create_new_instance(self, pInstanceName=None, gFromOpenWindow=False):
-        # Close the currently opened file
-        if self.currentInstance is not None:
-            self.currentInstance.close_file()
-
+    def create_new_instance(self, pInstanceName=None, pFromOpenWindow=False):
         # Set the currentInstance name and create the new file
-        if pInstanceName is not None:  # TODO : and pInstance name no in self.allInstances[]
-            self.initialize_variables(pInstanceName, gFromOpenWindow)
-            self.set_label_names()
+        if pInstanceName is not None and pFromOpenWindow is False:
+            if pInstanceName not in self.allInstances:
+
+                # Close the currently opened file
+                if self.currentInstance is not None:
+                    self.currentInstance.close_file()
+
+                self.initialize_variables(pInstanceName, pFromOpenWindow)
+                self.set_label_names()
+            else:
+                # The instance that the user is trying to create is already present.
+                # We need to show her a proper message.
+                self.msg.setWindowTitle("Duplicate Instance")
+                self.msg.setText("An instance with the name \" " + pInstanceName + "\" is already present on the disk. "
+                                                                                   "Please select a different name.")
+                self.msg.show()
         else:
-            # TODO : An instance with the same name is already present. Change the name or don't create.
-            # Need to show a window here.
-            pass
+            # Close the currently opened file
+            if self.currentInstance is not None:
+                self.currentInstance.close_file()
+            self.initialize_variables(pInstanceName, pFromOpenWindow)
+            self.set_label_names()
 
     # ----------------------------------------------------------------#
     # Shows the Instance Selection window                             #
@@ -456,10 +478,17 @@ class MainWindow(QMainWindow):
         # The user is doing an entry for this date for the first time.
         self.data.append([pDate, pValue])
 
+    def add_instances_to_list(self):
+        instanceList = os.listdir('./logs/')
+        instanceList.sort()
+        for name in instanceList:
+            if os.path.isfile(os.path.join('./logs/', name)) and name != "trkr":
+                self.allInstances.append(name)
+
     def set_current_date_from_system(self):
         self.current_year, self.current_month, self.current_date = list(str(datetime.now().date()).split('-'))
 
-        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
+        self.currentDate = str(self.current_date) + " " + str(self.months[int(self.current_month) - 1]) + " " + str(
             self.current_year)
 
     def closeEvent(self, event):
@@ -504,7 +533,7 @@ class MainWindow(QMainWindow):
         self.current_date, self.current_month, self.current_year = self.calendar.selectedDate().toString(
             'dd-MM-yyyy').split('-')
 
-        self.currentDate = str(self.current_date) + " " + str(months[int(self.current_month) - 1]) + " " + str(
+        self.currentDate = str(self.current_date) + " " + str(self.months[int(self.current_month) - 1]) + " " + str(
             self.current_year)
 
     def set_current_value(self, pDate):
@@ -548,7 +577,7 @@ class MainWindow(QMainWindow):
         pDate = int(pDate)
         currentDate = pDate % 100
         pDate = pDate // 100
-        currentMonth = months[(pDate % 100) - 1]
+        currentMonth = self.months[(pDate % 100) - 1]
         pDate = pDate // 100
         currentYear = pDate
         return str(currentDate) + " " + currentMonth + " " + str(currentYear)
@@ -559,7 +588,7 @@ class MainWindow(QMainWindow):
         lastModifiedDate, lastModifiedMonth, lastModifiedYear = self.lastModifiedDate.split(' ')
         lastModifiedDate = lastModifiedDate
         lastModifiedYear = lastModifiedYear
-        lastModifiedMonth = str(months.index(lastModifiedMonth) + 1)
+        lastModifiedMonth = str(self.months.index(lastModifiedMonth) + 1)
         if int(lastModifiedMonth) < 10:
             lastModifiedMonth = "0" + str(lastModifiedMonth)
         self.lastModifiedDate = int(lastModifiedYear + lastModifiedMonth + lastModifiedDate)

@@ -3,13 +3,14 @@ import os
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence, QIcon
 from PyQt5.QtWidgets import QPushButton, QHBoxLayout, QListWidget, QLineEdit, QLabel, QVBoxLayout, QShortcut, QWidget, \
-    QMainWindow
+    QMainWindow, QFileDialog
 
 
 class InstanceSelectionWindow(QMainWindow):
     def __init__(self, mainWindow):
         QWidget.__init__(self)
 
+        # To hold the reference to the Main Window
         self.parentWindow = mainWindow
 
         # Set the window properties
@@ -50,10 +51,12 @@ class InstanceSelectionWindow(QMainWindow):
         # Create the upper layout containing Location and Location Selector icon
         self.upper_layout = QHBoxLayout()
         self.upper_layout.addWidget(QLabel('Location'))
-        self.upper_layout.addWidget(QLineEdit('saurabh.trkr'))
+        self.upper_layout.addWidget(QLineEdit("{0}\\logs\\".format(os.getcwd())))
 
+        # TODO : Implement the functionality for this button.
         self.openIconButton = QPushButton()
         self.openIconButton.setIcon(QIcon('./resources/open.png'))
+        self.openIconButton.clicked.connect(self.show_select_window)
 
         self.upper_layout.addWidget(self.openIconButton)
 
@@ -79,15 +82,12 @@ class InstanceSelectionWindow(QMainWindow):
     def create_buttons(self):
         self.openLog_button = QPushButton('Open Log')
         self.openLog_button.clicked.connect(self.open_instance)
-        # self.openLog_button.setShortcut(QKeySequence(Qt.Key_Return))
-
         self.openLog_button.setStyleSheet("background-color : maroon")
 
     def add_items_to_open_list(self):
         self.listWidget.clear()
-        instanceList = os.listdir('./logs/')
-        instanceList.sort()
-        for name in instanceList:
+
+        for name in self.parentWindow.allInstances:
             if os.path.isfile(os.path.join('./logs/', name)) and name != "trkr":
                 self.listWidget.addItem(name)
 
@@ -96,6 +96,10 @@ class InstanceSelectionWindow(QMainWindow):
         print("Item Name : ", end='')
         self.parentWindow.create_new_instance(self.listWidget.currentItem().text(), True)
         self.close()
+
+    def show_select_window(self):
+        filename = QFileDialog.getOpenFileName()
+        # Todo : Implement this
 
     def close_window(self):
         print('Escape Pressed')
