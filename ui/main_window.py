@@ -8,6 +8,7 @@ from ui.add_window import *
 from ui.open_window import *
 from ui.close_window import *
 from ui.no_instance_window import *
+from ui.graph_window import *
 
 from database.datafile import *
 from algorithms.quicksort import *
@@ -45,17 +46,13 @@ class MainWindow(QMainWindow):
         # so that we can use it for setting the current date of the calendar widget.
         self.set_current_date_from_system()
 
-        # All the in-memory value will be kept here.
-        # This is the sole container for all our Date - Value info.
-        self.data = []
-
         self.set_window_properties()
+
+        self.create_widgets()
 
         # Needs to be done prior to widget creation as the app widgets
         # use values set in this function.
         self.initialize_variables()
-
-        self.create_widgets()
 
         self.create_layout()
 
@@ -257,6 +254,11 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- #
 
     def initialize_variables(self, pInstanceName=None, pFromOpenWindow=False):
+
+        # All the in-memory value will be kept here.
+        # This is the sole container for all our Date - Value info.
+        self.data = []
+
         if pInstanceName is None:  # This is true only during the startup
 
             # Check if there are instances already present on the disk. This would mean that
@@ -302,7 +304,7 @@ class MainWindow(QMainWindow):
                     else:
                         # Oops! The user is a cruel person. She has deleted the instance manually from the disk.
                         # Also, she is a bit partial towards the trkr file, so she has not deleted or modified it.
-                        # Consequently, the instance is there in the trkr file, but it doesn't exist on the disk. :-(
+                        # Consequently, the instance is there in the trkr file, but it doesn't exist on the disk. :-(a
                         # So like a responsible developer, we should show a proper message to the user to let her
                         # know what sin she has done.
                         self.msg.setWindowTitle("Oops!")
@@ -352,8 +354,6 @@ class MainWindow(QMainWindow):
     # physically.                                                     #
     # ----------------------------------------------------------------#
     def add_instance(self):
-        print("Add Button Clicked")
-
         # Save the current instance name. This will be used to know if the user has actually created
         # a new instance from the AddInstanceWindow
         self.prevInstanceName = self.currentInstanceName
@@ -410,7 +410,8 @@ class MainWindow(QMainWindow):
         print("Showing Log")
 
     def plot_graph(self):
-        print("Plotting Graph")
+        self.graphWindow = GraphWindow(self)
+        self.graphWindow.show()
 
     # ----------------------------------------------------------------#
     # This function is called when the user clicks the save button.   #
