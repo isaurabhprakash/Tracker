@@ -37,6 +37,12 @@ class GraphWindow(QDialog):
         day_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         weight_list = [11, 12, 23, 44, 15, 36, 67, 87, 559, 410, 211, 12, 13, 15, 5, 1, 177, 58, 69, 50]
 
+        self.parentWindow.slider.setMinimum(0)
+        self.parentWindow.slider.setMaximum(6)
+        self.parentWindow.slider.setValue(2)
+        self.parentWindow.slider.setTickPosition(2)
+        self.parentWindow.slider.setSingleStep(1)
+
         # create an axis
         #ax = self.figure.add_subplot(111)
 

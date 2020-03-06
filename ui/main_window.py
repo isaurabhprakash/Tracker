@@ -199,14 +199,14 @@ class MainWindow(QMainWindow):
         # MainLayout : The entire layout
         self.main_layout = QHBoxLayout(self.cw)
 
-        # LeftLayout : Layout containing Calendar, Slider and LineEdit
+        # LeftLayout : Layout containing Calendar, Slider and DoubleSpinBox
         self.left_layout = QVBoxLayout(self.cw)
 
         # LeftUpperLayout(Part of LeftLayout): Layout containing Calendar
         self.left_upper_layout = QGridLayout(self.cw)
         self.left_upper_layout.addWidget(self.calendar)
 
-        # LeftLowerLayout(Part of LeftLayout) : Layout containing Slider and LineEdit
+        # LeftLowerLayout(Part of LeftLayout) : Layout containing Slider and DoubleSpinBox
         self.left_lower_layout = QHBoxLayout(self.cw)
         self.left_lower_layout.addWidget(self.slider)
         self.left_lower_layout.addWidget(self.doubleSpinBox)
@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
         self.left_layout.addLayout(self.left_upper_layout)
         self.left_layout.addLayout(self.left_lower_layout)
 
-        # RightLayout : Layout containing Instance information adn different buttons.
+        # RightLayout : Layout containing Instance information and different buttons.
         self.right_layout = QVBoxLayout(self.cw)
 
         # RightUpperLayout : Layout containing Instance Information
@@ -259,7 +259,7 @@ class MainWindow(QMainWindow):
         # This is the sole container for all our Date - Value info.
         self.data = []
 
-        if pInstanceName is None:  # This is true only during the startup
+        if pInstanceName is None:  # This is None only during the startup
 
             # Check if there are instances already present on the disk. This would mean that
             # we have to open the last instance the user was working upon.
@@ -560,7 +560,7 @@ class MainWindow(QMainWindow):
             # When value changes in Slider, it triggers the change of
             # value in the Double Spin Box. When value changes in the Double Spin Box,
             # it triggers a change in the value of the Slider. As we don't want to
-            # fall into an infinite loop, thus we need to block signals here.
+            # fall into an infinite loop, we need to block signals here.
             self.doubleSpinBox.blockSignals(True)
             self.doubleSpinBox.setValue(self.currentSliderValue)
             self.doubleSpinBox.blockSignals(False)
