@@ -92,9 +92,7 @@ class InstanceSelectionWindow(QMainWindow):
                 self.listWidget.addItem(name)
 
     def open_instance(self):
-        print("Item activated")
-        print("Item Name : ", end='')
-        self.parentWindow.create_new_instance(self.listWidget.currentItem().text(), True)
+        self.parentWindow.create_new_instance(self.listWidget.currentItem().text(), "-1", -1, -1, True)
         self.close()
 
     def show_select_window(self):

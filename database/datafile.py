@@ -2,7 +2,6 @@ import os
 import struct
 import numpy as np
 
-
 # Right now we have fields that support just the int datatype
 from PyQt5.QtWidgets import QMessageBox
 
@@ -34,7 +33,11 @@ class DataFile:
 
     def write_field(self, pFieldId, pValue):
         self._file.write(struct.pack('i', int(pFieldId)))
-        self._file.write(struct.pack('i', int(pValue)))
+        if type(pValue) is list:
+            for i in pValue:
+                self._file.write(struct.pack('i', int(i)))
+        else:
+            self._file.write(struct.pack('i', int(pValue)))
         self._file.flush()
 
     # Since everything is to be brought in-memory, we read the entire file.
@@ -45,7 +48,8 @@ class DataFile:
         # Since the written data is packed, numpy is being used to read it.
         # Also, unlike struct, with numpy we can read the entire file into a list in one go.
         readData = np.fromfile(self._file, dtype=int)
-        print("Read Data : ")
+        print("Reading the data with numpy : ......")
+        print(readData)
         return readData
 
     def read_ini_file(self):

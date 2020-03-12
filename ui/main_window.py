@@ -17,6 +17,10 @@ gFromCloseWindow = False
 gFromOpenWindow = False
 isChangeDone = False
 
+UNIT_FIELD_ID = 1
+UNIT_FROM_RANGE = 2
+UNIT_TO_RANGE = 3
+
 
 class MainWindow(QMainWindow):
     def __init__(self, *args):
@@ -30,6 +34,9 @@ class MainWindow(QMainWindow):
         self.lastValue = "********"
         self.currentValue = "********"
         self.currentSliderValue = "70"
+        self.unitName = ""
+        self.fromRange = None
+        self.toRange = None
 
         # This list is used for displaying the date on the App.
         self.months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -50,9 +57,7 @@ class MainWindow(QMainWindow):
 
         self.create_widgets()
 
-        # Needs to be done prior to widget creation as the app widgets
-        # use values set in this function.
-        self.initialize_variables()
+        self.initialize_variables(None, None, None, None, False)
 
         self.create_layout()
 
@@ -253,11 +258,13 @@ class MainWindow(QMainWindow):
     # already existing instance is opened.                            #
     # --------------------------------------------------------------- #
 
-    def initialize_variables(self, pInstanceName=None, pFromOpenWindow=False):
+    def initialize_variables(self, pInstanceName, pUnitName, pFromRange, pToRange, pFromOpenWindow):
 
         # All the in-memory value will be kept here.
         # This is the sole container for all our Date - Value info.
         self.data = []
+
+        self.unitNameField = []
 
         if pInstanceName is None:  # This is None only during the startup
 
@@ -325,7 +332,7 @@ class MainWindow(QMainWindow):
 
         else:  # Alright. So the user is creating a new instance
 
-            # If the user turns out to be lazy and doesn't save anything for the newly created instance
+            # If the user turns out to be lazy and doesn't save any data for the newly created instance
             # the current instance will serve as the last instance she was working upon. So save this value as we
             # might need it.
             self.lastInstanceName = self.currentInstanceName
@@ -333,15 +340,21 @@ class MainWindow(QMainWindow):
             self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
             self.allInstances.append(self.currentInstanceName)
             self.allInstances.sort()
+
             # The user trying to open an already existing instance from the Open Window
             if pFromOpenWindow:
                 self.read_instance_from_disk()
-
                 # Again, the user might have deleted all the data.
                 if len(self.data):
                     self.lastModifiedDate = self.data[len(self.data) - 1][0]
                     self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
                     self.lastValue = str(self.data[len(self.data) - 1][1])
+            else:
+                self.unitName = pUnitName
+                self.unitName = self.unitName
+                self.unitFieldLen = len(self.unitName)
+                self.fromRange = pFromRange
+                self.toRange = pToRange
 
             # We write to the ini file only if the last instance name makes some sense.
             if self.lastInstanceName != "********":
@@ -360,26 +373,23 @@ class MainWindow(QMainWindow):
         self.addWindow = AddInstanceWindow(self)
         self.addWindow.show()
 
-        # User has actually given some name for the new instance
-        if self.currentInstanceName != self.prevInstanceName:
-            self.create_new_instance(self.currentInstanceName)
-
     # ----------------------------------------------------------------#
     # Actually creates a physical instance on the disk. An instance   #
     # is created only if it is not already present on the disk.       #
     # Otherwise, a window is shown to the user to take appropriate    #
     # action.                                                         #
     # ----------------------------------------------------------------#
-    def create_new_instance(self, pInstanceName=None, pFromOpenWindow=False):
+    def create_new_instance(self, pInstanceName, pUnitName, pFromRange, pToRange, pFromOpenWindow=False):
         # Set the currentInstance name and create the new file
-        if pInstanceName is not None and pFromOpenWindow is False:
+        if pFromOpenWindow is False:
+            # This ensures that we do not end up creating a duplicate instance
             if pInstanceName not in self.allInstances:
 
                 # Close the currently opened file
                 if self.currentInstance is not None:
                     self.currentInstance.close_file()
 
-                self.initialize_variables(pInstanceName, pFromOpenWindow)
+                self.initialize_variables(pInstanceName, pUnitName, pFromRange, pToRange, pFromOpenWindow)
                 self.set_label_names()
             else:
                 # The instance that the user is trying to create is already present.
@@ -392,7 +402,7 @@ class MainWindow(QMainWindow):
             # Close the currently opened file
             if self.currentInstance is not None:
                 self.currentInstance.close_file()
-            self.initialize_variables(pInstanceName, pFromOpenWindow)
+            self.initialize_variables(pInstanceName, pUnitName, pFromRange, pToRange, pFromOpenWindow)
             self.set_label_names()
 
     # ----------------------------------------------------------------#
@@ -446,7 +456,7 @@ class MainWindow(QMainWindow):
         # Last Modified Date is an integer representing the date.
         # Last Modified Date and Last Modified Value are written to the disk
         # so that the next time the application opens this instance, we can show these on the window.
-        self.lastModifiedDate = self.convert_date_to_int(self.current_date)
+        self.lastModifiedDate = self.convert_date_to_int(self.currentDate)
         self.lastValue = self.currentSliderValue
 
         # Obviously, as the user has clicked save, so she wants to see the same value
@@ -454,6 +464,8 @@ class MainWindow(QMainWindow):
         self.currentValue = self.currentSliderValue
 
         # Write everything in memory
+        print(self.data)
+
         self.write_to_inmemory_list(self.lastModifiedDate, self.currentSliderValue)
 
         print(self.data)
@@ -504,13 +516,33 @@ class MainWindow(QMainWindow):
 
     def read_instance_from_disk(self):
         self.data = self.currentInstance.read_file()
+        print(self.data)
         self.data = self.create_in_memory_data()
 
     def create_in_memory_data(self):
         l = []
         for i in range(0, len(self.data), 2):
-            l.append([self.data[i], self.data[i + 1]])
+            if self.data[i] != UNIT_FROM_RANGE:
+                l.append([self.data[i], self.data[i + 1]])
+            else:
+                self.read_meta_data(i)
+                break
         return l
+
+    def read_meta_data(self, pIndex):
+        if self.data[pIndex] == UNIT_FROM_RANGE:
+            self.fromRange = self.data[pIndex + 1]
+            pIndex = pIndex + 2
+        if self.data[pIndex] == UNIT_TO_RANGE:
+            self.toRange = self.data[pIndex + 1]
+            pIndex = pIndex + 2
+
+        for i in range(pIndex + 1, len(self.data)):
+            self.unitName = self.unitName + (chr(int(self.data[i])))
+
+        print("From Range : " + str(self.fromRange))
+        print("To Range : " + str(self.toRange))
+        print("Unit Name :" + str(self.unitName))
 
     def set_label_names(self):
         self.right_upper_top_label.setText(
@@ -546,7 +578,7 @@ class MainWindow(QMainWindow):
         self.currentValue = "********"
 
     def convert_date_to_int(self, pDate):
-        if int(self.current_date) < 10:
+        if len(self.current_date) < 2:
             self.current_date = "0" + self.current_date
 
         return int(self.current_year + self.current_month + self.current_date)
@@ -585,15 +617,24 @@ class MainWindow(QMainWindow):
 
     def save_file(self):
         global gFromCloseWindow
+
         quicksort(self.data, 0, len(self.data) - 1)
         lastModifiedDate, lastModifiedMonth, lastModifiedYear = self.lastModifiedDate.split(' ')
-        lastModifiedDate = lastModifiedDate
-        lastModifiedYear = lastModifiedYear
         lastModifiedMonth = str(self.months.index(lastModifiedMonth) + 1)
-        if int(lastModifiedMonth) < 10:
-            lastModifiedMonth = "0" + str(lastModifiedMonth)
+
+        if len(lastModifiedMonth) < 2:
+            lastModifiedMonth = "0" + lastModifiedMonth
+
         self.lastModifiedDate = int(lastModifiedYear + lastModifiedMonth + lastModifiedDate)
         self.data.append([self.lastModifiedDate, self.lastValue])
+
+        for i in self.unitName:
+            self.unitNameField.append(ord(i))
+
+        self.data.append([UNIT_FROM_RANGE, self.fromRange])
+        self.data.append([UNIT_TO_RANGE, self.toRange])
+        self.data.append([(UNIT_FIELD_ID + self.unitFieldLen), self.unitNameField])
+
         for i in self.data:
             self.currentInstance.write_field(i[0], i[1])
 
