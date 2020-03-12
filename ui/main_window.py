@@ -35,8 +35,8 @@ class MainWindow(QMainWindow):
         self.currentValue = "********"
         self.currentSliderValue = "70"
         self.unitName = ""
-        self.fromRange = None
-        self.toRange = None
+        self.fromRange = 60  # Some Default Value
+        self.toRange = 120  # Some Default Value
 
         # This list is used for displaying the date on the App.
         self.months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -83,8 +83,8 @@ class MainWindow(QMainWindow):
 
         # Create the widgets used in the app
         self.calendar = self.get_calendar_widget()
-        self.slider = self.get_slider()
-        self.doubleSpinBox = self.get_double_spin_box()
+        self.slider = self.get_slider(self.fromRange, self.toRange)
+        self.doubleSpinBox = self.get_double_spin_box(self.toRange)
 
         # Create the buttons used in the app
         self.create_buttons()
@@ -142,35 +142,46 @@ class MainWindow(QMainWindow):
     # -------------------------------------------- #
     # Creates a QSlider and returns it             #
     # ---------------------------------------------#
-    def get_slider(self):
+    def get_slider(self, pFromRange, pToRange):
         slider = QSlider(Qt.Horizontal, self.cw)
         slider.setMinimum(0)
-        slider.setMaximum(600)
-        slider.setValue(70)
+        slider.setMaximum((pToRange - pFromRange) * 10)
+        slider.setValue(pFromRange + ((pToRange - pFromRange) // 2))
         slider.setTickPosition(2)
         slider.setSingleStep(1)
         slider.valueChanged.connect(lambda x: self.set_current_slider_value(x))
         return slider
 
+    def change_slider_properties(self, pFromRange, pToRange):
+        self.slider.setMinimum(0)
+        self.slider.setMaximum((pToRange - pFromRange) * 10)
+        # self.slider.blockSignals(True)
+        # self.slider.setValue(pFromRange + ((pToRange - pFromRange) // 2))
+        self.set_current_slider_value(((pToRange - pFromRange) * 10) // 2, False, True)
+        # self.slider.blockSignals(False)
+
     # -------------------------------------------- #
     # Creates a QDoubleSpinBox and returns it      #
     # ---------------------------------------------#
-    def get_double_spin_box(self):
+    def get_double_spin_box(self, pToRange):
         doubleSpinBox = QDoubleSpinBox(self.cw)
-        doubleSpinBox.setMaximum(120.0)
+        doubleSpinBox.setMaximum(pToRange)
 
         # When value changes in Double Spin Box, it triggers the change of
         # value in the slider. When value changes in the slider, it triggers
         # a change in the value of the Double Spin Box. As we don't want to
         # fall into an infinite loop, thus we need to block signals here.
-        doubleSpinBox.blockSignals(True)
         doubleSpinBox.setValue(int(self.currentSliderValue))
-        doubleSpinBox.blockSignals(False)
 
         # When value changes in QSpinBox, same should be reflected in QSlider.
         doubleSpinBox.valueChanged.connect(lambda x: self.set_double_spin_box_value(x))
 
         return doubleSpinBox
+
+    def change_double_spin_box_properties(self, pToRange):
+        self.doubleSpinBox.blockSignals(True)
+        self.doubleSpinBox.setMaximum(pToRange)
+        self.doubleSpinBox.blockSignals(False)
 
     # ----------------------------------------------------------------#
     # This is our core function for creating the UI. All the created  #
@@ -308,6 +319,9 @@ class MainWindow(QMainWindow):
                             self.lastModifiedDate = str(self.data[len(self.data) - 1][0])
                             self.lastModifiedDate = self.convert_int_to_date(self.lastModifiedDate)
                             self.lastValue = str(self.data[len(self.data) - 1][1])
+
+                        self.change_slider_properties(self.fromRange, self.toRange)
+                        self.change_double_spin_box_properties(self.toRange)
                     else:
                         # Oops! The user is a cruel person. She has deleted the instance manually from the disk.
                         # Also, she is a bit partial towards the trkr file, so she has not deleted or modified it.
@@ -583,8 +597,8 @@ class MainWindow(QMainWindow):
 
         return int(self.current_year + self.current_month + self.current_date)
 
-    def set_current_slider_value(self, pCurrentValue, fromDoubleSpinBox=False):
-        self.currentSliderValue = int(60 + (pCurrentValue / 10))
+    def set_current_slider_value(self, pCurrentValue, fromDoubleSpinBox=False, fromMetaData=False):
+        self.currentSliderValue = int(self.fromRange + (pCurrentValue / 10))
 
         # Block signals so that vlaueChanged signal is not triggered for QDoubleSpinBox.
         # Else there will be a cyclic situation
@@ -597,13 +611,13 @@ class MainWindow(QMainWindow):
             self.doubleSpinBox.setValue(self.currentSliderValue)
             self.doubleSpinBox.blockSignals(False)
 
-        if fromDoubleSpinBox:
+        if fromDoubleSpinBox or fromMetaData:
             self.slider.blockSignals(True)
             self.slider.setValue(pCurrentValue)
             self.slider.blockSignals(False)
 
     def set_double_spin_box_value(self, pCurrentValue):
-        pCurrentValue = (pCurrentValue - 60) * 10
+        pCurrentValue = (pCurrentValue - self.fromRange) * 10
         self.set_current_slider_value(pCurrentValue, True)
 
     def convert_int_to_date(self, pDate):
