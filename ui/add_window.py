@@ -61,7 +61,9 @@ class AddInstanceWindow(QMainWindow):
 
     def create_spinBoxes(self):
         self.fromRangeBox = QSpinBox(self.cw)
+        self.fromRangeBox.setMaximum(10000000)
         self.toRangeBox = QSpinBox(self.cw)
+        self.toRangeBox.setMaximum(10000000)
 
         self.fromRangeBox.setValue(60)
         self.toRangeBox.setValue(120)

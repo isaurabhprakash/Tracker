@@ -352,7 +352,8 @@ class MainWindow(QMainWindow):
             self.lastInstanceName = self.currentInstanceName
             self.currentInstanceName = pInstanceName
             self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-            self.allInstances.append(self.currentInstanceName)
+            if self.currentInstanceName not in self.allInstances:
+                self.allInstances.append(self.currentInstanceName)
             self.allInstances.sort()
 
             # The user trying to open an already existing instance from the Open Window
@@ -374,6 +375,8 @@ class MainWindow(QMainWindow):
             if self.lastInstanceName != "********":
                 self._trkr.write_ini_file(self.lastInstanceName)
 
+            self.change_slider_properties(self.fromRange, self.toRange)
+            self.change_double_spin_box_properties(self.toRange)
     # ----------------------------------------------------------------#
     # This function is called when the user clicks the add button.    #
     # Creates a new window to take the name of the instance the user  #
@@ -551,6 +554,7 @@ class MainWindow(QMainWindow):
             self.toRange = self.data[pIndex + 1]
             pIndex = pIndex + 2
 
+        self.unitName = ""
         for i in range(pIndex + 1, len(self.data)):
             self.unitName = self.unitName + (chr(int(self.data[i])))
 
