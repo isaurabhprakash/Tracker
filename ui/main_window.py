@@ -9,6 +9,7 @@ from ui.open_window import *
 from ui.close_window import *
 from ui.no_instance_window import *
 from ui.graph_window import *
+from ui.log_window import *
 
 from database.datafile import *
 from algorithms.quicksort import *
@@ -329,9 +330,9 @@ class MainWindow(QMainWindow):
                         # know what sin she has done.
                         self.msg.setWindowTitle("Oops!")
                         self.msg.setText("Oops!! Someone has deleted \"" + self.lastInstanceName + "\" from the "
-                                                                                                 "disk.\nThe only"
-                                                                                                 " rescue is to "
-                                                                                                 "start fresh...")
+                                                                                                   "disk.\nThe only"
+                                                                                                   " rescue is to "
+                                                                                                   "start fresh...")
                         self.msg.show()
 
                         # Make sure the next time we don't have to encounter the
@@ -433,7 +434,8 @@ class MainWindow(QMainWindow):
         print("Importing data")
 
     def show_log(self):
-        print("Showing Log")
+        self.logWindow = LogWindow(self, 2, 2, self.unitName) # TODO : Rows should be equal to the number of entries
+        self.logWindow.show()
 
     def plot_graph(self):
         self.graphWindow = GraphWindow(self)
