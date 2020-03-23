@@ -328,7 +328,7 @@ class MainWindow(QMainWindow):
                         # So like a responsible developer, we should show a proper message to the user to let her
                         # know what sin she has done.
                         self.msg.setWindowTitle("Oops!")
-                        self.msg.setText("Oops!! Someone has deleted " + self.lastInstanceName + " from the "
+                        self.msg.setText("Oops!! Someone has deleted \"" + self.lastInstanceName + "\" from the "
                                                                                                  "disk.\nThe only"
                                                                                                  " rescue is to "
                                                                                                  "start fresh...")

@@ -1,8 +1,6 @@
 from ui.main_window import *
 from PyQt5.QtWidgets import QApplication
 
-global window
-
 if __name__ == '__main__':
     # Needed for all Qt Apps.
     app = QApplication([])
@@ -14,8 +12,7 @@ if __name__ == '__main__':
 
     # The main window of tracker. All the windows will be created from this
     # window
-    window = MainWindow()
+    MainWindow().show()
 
-    window.show()
 
     app.exec_()
