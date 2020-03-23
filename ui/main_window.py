@@ -155,10 +155,7 @@ class MainWindow(QMainWindow):
     def change_slider_properties(self, pFromRange, pToRange):
         self.slider.setMinimum(0)
         self.slider.setMaximum((pToRange - pFromRange) * 10)
-        # self.slider.blockSignals(True)
-        # self.slider.setValue(pFromRange + ((pToRange - pFromRange) // 2))
         self.set_current_slider_value(((pToRange - pFromRange) * 10) // 2, False, True)
-        # self.slider.blockSignals(False)
 
     # -------------------------------------------- #
     # Creates a QDoubleSpinBox and returns it      #
@@ -277,6 +274,8 @@ class MainWindow(QMainWindow):
 
         self.unitNameField = []
 
+        self.unitFieldLen = 0;
+
         if pInstanceName is None:  # This is None only during the startup
 
             # Check if there are instances already present on the disk. This would mean that
@@ -366,7 +365,6 @@ class MainWindow(QMainWindow):
                     self.lastValue = str(self.data[len(self.data) - 1][1])
             else:
                 self.unitName = pUnitName
-                self.unitName = self.unitName
                 self.unitFieldLen = len(self.unitName)
                 self.fromRange = pFromRange
                 self.toRange = pToRange
@@ -377,6 +375,7 @@ class MainWindow(QMainWindow):
 
             self.change_slider_properties(self.fromRange, self.toRange)
             self.change_double_spin_box_properties(self.toRange)
+
     # ----------------------------------------------------------------#
     # This function is called when the user clicks the add button.    #
     # Creates a new window to take the name of the instance the user  #
@@ -402,7 +401,7 @@ class MainWindow(QMainWindow):
             # This ensures that we do not end up creating a duplicate instance
             if pInstanceName not in self.allInstances:
 
-                # Close the currently opened file
+                # Close the currently opened log
                 if self.currentInstance is not None:
                     self.currentInstance.close_file()
 
