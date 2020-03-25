@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
 
                 # Alright. So there are existing instances on the disk. Or at least the trkr
                 # file is there.Open the trkr file to know the last instance that the user was working upon.
-                self._trkr = DataFile("./logs/trkr")
+                self._trkr = DataFile("./logs/trkr")  # TODO : Can be moved above this if-else group
 
                 # Get the name of the last instance from the trkr file.
                 self.lastInstanceName = self._trkr.read_ini_file().decode('UTF-8')
@@ -433,9 +433,20 @@ class MainWindow(QMainWindow):
     def delete_data(self):
         print("Importing data")
 
+    # -----------------------------------------------------------------#
+    # Opens up the log window which shows log in a QTableWidget        #
+    # -----------------------------------------------------------------#
     def show_log(self):
-        self.logWindow = LogWindow(self, 2, 2, self.unitName) # TODO : Rows should be equal to the number of entries
-        self.logWindow.show()
+        if self.currentInstance is not None:
+            self.logWindow = LogWindow(self, len(self.data), 2)
+            self.logWindow.show()
+        else:
+            self.msg = QMessageBox()
+            self.msg.setWindowTitle("No log opened!")
+            self.msg.setWindowIcon(QIcon('resources/logo.png'))
+            self.msg.setGeometry(300, 300, 300, 300)
+            self.msg.setText("No log opened!! Please open a log first.")
+            self.msg.show()
 
     def plot_graph(self):
         self.graphWindow = GraphWindow(self)
@@ -467,8 +478,7 @@ class MainWindow(QMainWindow):
 
         # Write the current instance name to the ini file so that
         # the next time the app opens, it opens this instance only.
-        if self.currentInstance is not None:
-            self._trkr.write_ini_file(self.currentInstanceName)
+        self._trkr.write_ini_file(self.currentInstanceName)
 
         # Get the current date and set it to last modified date
         # Last Modified Date is an integer representing the date.
