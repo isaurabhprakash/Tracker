@@ -154,3 +154,7 @@ class AddInstanceWindow(QMainWindow):
         else:
             self.parentWindow.create_new_instance(instance_name, unit_name, from_range, to_range)
             self.close()
+
+    def closeEvent(self, event):
+        self.parentWindow.currentlyOpenedChildWindows.remove(self)
+        event.accept()

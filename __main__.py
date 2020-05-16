@@ -14,5 +14,4 @@ if __name__ == '__main__':
     # window
     MainWindow().show()
 
-
     app.exec_()

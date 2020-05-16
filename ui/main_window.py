@@ -27,6 +27,11 @@ class MainWindow(QMainWindow):
     def __init__(self, *args):
         QMainWindow.__init__(self, *args)
 
+        # Contains the list of all the currently opened child windows.
+        # This list is used to close a child window when it is open and the
+        # user closes the Main Window
+        self.currentlyOpenedChildWindows = []
+
         # First things first. Initialize the variables that we are going to use throughout the program.
         self.currentInstance = None
         self.currentInstanceName = "********"
@@ -388,6 +393,7 @@ class MainWindow(QMainWindow):
         # a new instance from the AddInstanceWindow
         self.prevInstanceName = self.currentInstanceName
         self.addWindow = AddInstanceWindow(self)
+        self.currentlyOpenedChildWindows.append(self.addWindow)
         self.addWindow.show()
 
     # ----------------------------------------------------------------#
@@ -539,7 +545,12 @@ class MainWindow(QMainWindow):
                 self.closeWindow = CloseWindow(self)
                 self.closeWindow.show()
                 event.ignore()
+            else:
+                for window in self.currentlyOpenedChildWindows:
+                    window.close()
         else:
+            for window in self.currentlyOpenedChildWindows:
+                window.close()
             super(MainWindow, self).closeEvent(event)
 
     def read_instance_from_disk(self):
@@ -575,8 +586,8 @@ class MainWindow(QMainWindow):
 
     def set_label_names(self):
         self.right_upper_top_label.setText(
-            "Instance Name : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
-                self.lastModifiedDate) + "\nLast Value : " + str(self.lastValue))
+            "Log Name          : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
+                self.lastModifiedDate) + "\nLast Value          : " + str(self.lastValue))
         self.right_upper_bottom_label.setText(
             "\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentValue))
 
