@@ -38,6 +38,7 @@ class MainWindow(QMainWindow):
         self.lastInstanceName = "********"
         self.lastModifiedDate = "********"
         self.lastValue = "********"
+        self.currentDate = "********"
         self.currentValue = "********"
         self.currentSliderValue = "70"
         self.unitName = ""
@@ -47,19 +48,20 @@ class MainWindow(QMainWindow):
         # This list is used for displaying the date on the App.
         self.months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-        # Contains the list of all the instances the user has created.
-        # This list is used when the user tries to create a duplicate instance.
-        # Also, it is used the OpenWindow for showing the list of instances.
-        self.allInstances = []
+        # Contains the list of all the Logs the user has created.
+        # This list is used when the user tries to create a duplicate Log.
+        # Also, it is used the OpenWindow for showing the list of logs.
+        self.allLogs = []
+
+        # Set the windows properties like icon, window title, geometry, etc...
+        self.set_window_properties()
 
         # Add items to allInstances
-        self.add_instances_to_list()
+        self.add_logs_to_list()
 
         # Everything's done. Finally, set the current date form the system
         # so that we can use it for setting the current date of the calendar widget.
         self.set_current_date_from_system()
-
-        self.set_window_properties()
 
         self.create_widgets()
 
@@ -107,7 +109,7 @@ class MainWindow(QMainWindow):
     def create_buttons(self):
         self.add_button = QPushButton("Add +", self.cw)
         self.add_button.setFixedSize(300, 60)
-        self.add_button.clicked.connect(self.add_instance)
+        self.add_button.clicked.connect(self.add_log)
         self.add_button.setShortcut(QKeySequence(Qt.Key_A))
 
         self.open_button = QPushButton("Open", self.cw)
@@ -282,15 +284,15 @@ class MainWindow(QMainWindow):
 
         self.unitFieldLen = 0;
 
-        if pInstanceName is None:  # This is None only during the startup
+        if pInstanceName is None:  # True only during startup.
 
-            # Check if there are instances already present on the disk. This would mean that
-            # we have to open the last instance the user was working upon.
+            # Check if there are logs already present on the disk. This would mean that
+            # we have to open the last log the user was working upon.
             if len([name for name in os.listdir('./logs/') if os.path.isfile(os.path.join('./logs/', name))]) is not 0:
 
                 # Alright. So there are existing instances on the disk. Or at least the trkr
-                # file is there.Open the trkr file to know the last instance that the user was working upon.
-                self._trkr = DataFile("./logs/trkr")  # TODO : Can be moved above this if-else group
+                # file is there. Open the trkr file to know the last instance that the user was working upon.
+                self._trkr = DataFile("./logs/trkr")
 
                 # Get the name of the last instance from the trkr file.
                 self.lastInstanceName = self._trkr.read_ini_file().decode('UTF-8')
@@ -357,9 +359,9 @@ class MainWindow(QMainWindow):
             self.lastInstanceName = self.currentInstanceName
             self.currentInstanceName = pInstanceName
             self.currentInstance = DataFile("./logs/" + str(self.currentInstanceName))
-            if self.currentInstanceName not in self.allInstances:
-                self.allInstances.append(self.currentInstanceName)
-            self.allInstances.sort()
+            if self.currentInstanceName not in self.allLogs:
+                self.allLogs.append(self.currentInstanceName)
+            self.allLogs.sort()
 
             # The user trying to open an already existing instance from the Open Window
             if pFromOpenWindow:
@@ -384,11 +386,10 @@ class MainWindow(QMainWindow):
 
     # ----------------------------------------------------------------#
     # This function is called when the user clicks the add button.    #
-    # Creates a new window to take the name of the instance the user  #
-    # wants to create. If a name is given, it creates the instance    #
-    # physically.                                                     #
+    # Creates a new window to take the name of the log the user wants #
+    # to create. If a name is given, it creates the log physically.   #
     # ----------------------------------------------------------------#
-    def add_instance(self):
+    def add_log(self):
         # Save the current instance name. This will be used to know if the user has actually created
         # a new instance from the AddInstanceWindow
         self.prevInstanceName = self.currentInstanceName
@@ -406,7 +407,7 @@ class MainWindow(QMainWindow):
         # Set the currentInstance name and create the new file
         if pFromOpenWindow is False:
             # This ensures that we do not end up creating a duplicate instance
-            if pInstanceName not in self.allInstances:
+            if pInstanceName not in self.allLogs:
 
                 # Close the currently opened log
                 if self.currentInstance is not None:
@@ -525,12 +526,12 @@ class MainWindow(QMainWindow):
         # The user is doing an entry for this date for the first time.
         self.data.append([pDate, pValue])
 
-    def add_instances_to_list(self):
+    def add_logs_to_list(self):
         instanceList = os.listdir('./logs/')
         instanceList.sort()
         for name in instanceList:
             if os.path.isfile(os.path.join('./logs/', name)) and name != "trkr":
-                self.allInstances.append(name)
+                self.allLogs.append(name)
 
     def set_current_date_from_system(self):
         self.current_year, self.current_month, self.current_date = list(str(datetime.now().date()).split('-'))
@@ -589,7 +590,7 @@ class MainWindow(QMainWindow):
             "Log Name          : " + str(self.currentInstanceName) + "\nLast modified on : " + str(
                 self.lastModifiedDate) + "\nLast Value          : " + str(self.lastValue))
         self.right_upper_bottom_label.setText(
-            "\n\nDate  : " + str(self.currentDate) + "\nValue : " + str(self.currentValue))
+            "\n\nDate     : " + str(self.currentDate) + "\nValue   : " + str(self.currentValue))
 
     def create_labels(self):
         self.right_upper_top_label = QLabel(self.cw)

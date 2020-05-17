@@ -60,7 +60,7 @@ class NoInstanceWindow(QMainWindow):
 
 
     def create_instance(self):
-        self.parentWindow.add_instance()
+        self.parentWindow.add_log()
         self.close()
 
     def open_instance(self):
